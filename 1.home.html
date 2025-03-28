@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calle Cafe - Dashboard</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="images/browserlogo.png" type="browser logo">
+</head>
+
+<body>
+    <div>
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <h2>Calle Cafe
+                <span class="branch-name" id="branchName"></span>
+            </h2>
+            
+            <ul>
+                <li><a href="1.home.html">HOME</a></li>
+                <li><a href="2.discounted_customers.html">DISCOUNTED CUSTOMERS</a></li>
+                <li><a href="3.archive.html">ARCHIVE</a></li>
+                <li><a href="#" id="accountManagementLink">ACCOUNT MANAGEMENT</a></li>
+                <li><a href="#" id="userAccountSettingsLink">USER ACCOUNT SETTINGS</a></li>
+                <li><a id="logoutButton" href="#">LOGOUT</a></li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" style="width: 80%; padding: 15px;">
+            <h2>Dashboard</h2>
+
+            <!-- GRAPHS AND CHARTS -->
+            <div>
+                <h3></h3>
+                <div class="live-counters" style="padding-bottom: 50px;">
+                    <div class="counter-box">
+                        <h3>Total Discounted Customers</h3>
+                        <p id="totalCustomers">0</p>
+                    </div>
+                    <div class="counter-box">
+                        <h3>Senior Citizen</h3>
+                        <p id="totalSenior">0</p>
+                    </div>
+                    <div class="counter-box">
+                        <h3>PWD</h3>
+                        <p id="totalPWD">0</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3></h3>
+                <div class="charts-container">
+                    <!-- Pie Chart -->
+                    <div class="chart-box">
+                        <canvas id="myPieChart"></canvas>
+                        <div class="dropdown">
+                            <select id="pieChartPeriod">
+                                <option value="week">Week</option>
+                                <option value="month">Month</option>
+                                <option value="year">Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart -->
+                    <div class="chart-box">
+
+                        <canvas id="myBarChart"></canvas>
+                        <div class="dropdown">
+                            <select id="barChartPeriod">
+                                <option value="week">Week</option>
+                                <option value="month">Month</option>
+                                <option value="year">Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- TABLE -->
+            <div>
+                <h3>Recent Customers (last 24 hours)</h3>
+                <table>
+                    <tr>
+                    <tr>
+                        <th style="width: 12.5%;">ID NUMBER</th>
+                        <th style="width: 12.5%;">NAME</th>
+                        <th style="width: 8%;">CITIZEN</th>
+                        <th style="width: 10%;">FOOD</th>
+                        <th style="width: 8%;">DATE</th>
+                        <th style="width: 6%;">TIME</th>
+                        <th style="width: 10%;">CASHIER</th>
+                        <th style="width: 5%;">TOTAL</th>
+                    </tr>
+
+                    </tr>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+            <!-- PAGINATION -->
+        </main>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Enter Password</h2>
+            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <button class="modal-password-btn" id="passwordSubmit">Submit</button>
+        </div>
+    </div>
+
+    <div class="modal"> <!-- LOGOUT MODAL -->
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Are you sure?</h2>
+            <button>Yes</button>
+            <button>No</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let pieChart, barChart;
+            // Function to create the Pie Chart
+            const restrictedPages = ["4.1account_management.html", "5.account_settings.html"];
+            history.pushState(null, null, location.href);
+            window.onpopstate = function () {
+                const referrer = document.referrer ? new URL(document.referrer).pathname.split('/').pop() : '';
+                if (restrictedPages.includes(referrer)) {
+                    // Redirect to the home page if the user tries to navigate back to a restricted page
+                    window.location.href = "1.home.html";
+                } else {
+                    // Push the current page back to the history stack
+                    history.pushState(null, null, location.href);
+                }
+            };
+            fetch("1.recent_customers.php")
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // Debugging: Check the response
+                const branchNameElement = document.getElementById("branchName");
+                branchNameElement.textContent = data.branch || "Unknown Branch";
+            })
+            .catch(error => console.error("Error fetching branch name:", error));
+            
+
+            function createPieChart(data) {
+                const ctx = document.getElementById('myPieChart').getContext('2d');
+                if (pieChart) pieChart.destroy(); // Destroy existing chart if it exists
+                pieChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Drinks', 'Pastry', 'Pasta'],
+                        datasets: [{
+                            label: 'Food Categories',
+                            data: data,
+                            backgroundColor: ['#6F814B', '#805736', '#B28330'],
+                            borderColor: ['#4E6136', '#5C3F27', '#8A6928'],
+                            hoverOffset: 4,
+                            borderWidth: 0.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Function to create the Bar Chart
+            function createBarChart(data) {
+                const ctx = document.getElementById('myBarChart').getContext('2d');
+                if (barChart) barChart.destroy(); // Destroy existing chart if it exists
+                barChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Senior Citizens', 'PWD', 'Others', 'Total'],
+                        datasets: [{
+                            label: 'Count',
+                            data: data,
+                            backgroundColor: ['#6F814B', '#805736', '#B28330', '#C77932'],
+                            borderColor: ['#4E6136', '#5C3F27', '#8A6928', '#9E5F26'],
+                            borderWidth: 0.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Function to fetch data based on the selected period
+            function fetchChartData(period, chartType) {
+                fetch(`fetch_chart_data.php?period=${period}&chartType=${chartType}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (chartType === 'pie') {
+                            createPieChart(data);
+                        } else if (chartType === 'bar') {
+                            createBarChart(data);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching chart data:', error));
+            }
+
+            // Event listeners for period selection
+            document.getElementById('pieChartPeriod').addEventListener('change', function () {
+                const period = this.value;
+                fetchChartData(period, 'pie');
+            });
+
+            document.getElementById('barChartPeriod').addEventListener('change', function () {
+                const period = this.value;
+                fetchChartData(period, 'bar');
+            });
+
+            // Initialize charts with default data (Week) on page load
+            fetchChartData('week', 'pie');
+            fetchChartData('week', 'bar');
+
+            // Fetch and display recent customers
+            fetch("1.recent_customers.php")
+                .then(response => response.json())
+                .then(data => {
+                    let tableBody = document.getElementById("tableBody");
+                    let totalCustomers = document.getElementById("totalCustomers");
+                    let totalSenior = document.getElementById("totalSenior");
+                    let totalPWD = document.getElementById("totalPWD");
+
+                    tableBody.innerHTML = "";
+
+                    let rows = "";
+                    data.customers.forEach(customer => {
+                        rows += `
+                        <tr>
+                        <td>${customer.ID}</td>
+                        <td>${customer.name}</td>
+                        <td>${customer.citizen}</td>
+                        <td>${customer.food}</td>
+                        <td>${customer.date}</td>
+                        <td>${customer.time}</td>
+                        <td>${customer.cashier}</td>
+                        <td>${customer.discounted_price}</td>
+                        </tr>
+                    `;
+                    });
+
+                    tableBody.innerHTML = rows;
+
+                    totalCustomers.textContent = data.totalDiscounted;
+                    totalSenior.textContent = data.totalSenior;
+                    totalPWD.textContent = data.totalPWD;
+
+                    totalCustomers.textContent = data.totalDiscounted;
+                    totalSenior.textContent = data.totalSenior;
+                    totalPWD.textContent = data.totalPWD;
+
+
+                })
+                .catch(error => console.error("Error fetching customer data:", error));
+
+                let timeout; // Variable to track inactivity timeout
+                const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+                const warningDuration = 30 * 1000; // 30 seconds before logout
+
+                // Function to reset the inactivity timer
+                function resetTimer() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+                }
+
+                function showTimeoutWarning() {
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
+
+                warningModal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <h2>Session Timeout Warning</h2>
+                        <p>You will be logged out in 30 seconds due to inactivity.</p>
+                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
+                    </div>
+                `;
+
+                document.body.appendChild(warningModal);
+
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
+
+                    // Automatically log out after 30 seconds if no action is taken
+                    setTimeout(logout, warningDuration);
+                }
+
+                // Function to log out the user
+                function logout() {
+                    window.location.href = "logout.php"; // Redirect to the logout page
+                }
+
+                // Reset the timer on user activity
+                window.addEventListener("mousemove", resetTimer);
+                window.addEventListener("keydown", resetTimer);
+                window.addEventListener("scroll", resetTimer);
+                window.addEventListener("click", resetTimer);
+
+                // Start the inactivity timer
+                resetTimer();
+
+                 history.pushState(null, null, location.href);
+            window.onpopstate = function () {
+                // Prevent navigating back to sensitive pages
+                const restrictedPages = [
+                    "4.1account_management.html",
+                    "4.2.request.html",
+                    "5.account_settings.html",
+                    "verify_otp.html",
+                    "index.html"
+                ];
+
+            };
+
+        });
+
+        function showImageModal(imageData) {
+            const modal = document.getElementById("imageModal");
+            const modalImage = document.getElementById("modalImage");
+            const closeBtn = document.querySelector("#imageModal .close");
+
+            modalImage.src = `data:image/jpeg;base64,${imageData}`;
+            modal.style.display = "block";
+
+            closeBtn.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        }
+
+        document.getElementById("logoutButton").addEventListener("click", function () {
+            window.location.href = "logout.php";
+        });
+
+       
+
+        document.getElementById("accountManagementLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            showPasswordModal("4.1account_management.html");
+        });
+
+        document.getElementById("userAccountSettingsLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            showPasswordModal("5.account_settings.html");
+        });
+
+        function showPasswordModal(redirectUrl) {
+            const modal = document.getElementById("passwordModal");
+            const closeBtn = document.querySelector(".close");
+            const submitBtn = document.getElementById("passwordSubmit");
+
+            modal.style.display = "block";
+
+            closeBtn.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            submitBtn.onclick = function () {
+                const password = document.getElementById("passwordInput").value;
+                if (password) {
+                    fetch("verify_password.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: "password=" + encodeURIComponent(password)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = redirectUrl;
+                            } else {
+                                alert("Incorrect password. Please try again.");
+                            }
+                        })
+                        .catch(error => console.error("Error verifying password:", error));
+                }
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>

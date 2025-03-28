@@ -1,0 +1,1 @@
+UPDATE cashier_users SET pin = ?, username = ? WHERE name = ? AND branch = ?

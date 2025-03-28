@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calle Cafe - Super Admin Archives</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="admin_images/browserlogo.png" type="browser logo">
+
+</head>
+
+<body>
+    <div>
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <h2>Calle Cafe <small> (superadmin)</small></h2>
+            <ul>
+                <li><a href="superadmin_home.html">HOME</a></li>
+                <li><a href="superadmin_discountedCustomers.html">DISCOUNTED CUSTOMERS</a></li>
+                <li><a href="superadmin_archive.html">ARCHIVE</a></li>
+                <li><a href="#" id="accountManagementLink">ACCOUNT MANAGEMENT</a></li>
+                <li><a href="#" id="userAccountSettingsLink">SUPER ADMIN SETTINGS</a></li>
+                <li><a href="#" id="branchManagementLink">BRANCH MANAGEMENT</a></li>
+                <li><a id="logoutButton">LOGOUT</a></li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" style="width: 80%; padding: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Archives</h2>
+            </div>
+            <!-- FILTER FORM -->
+            <form class="archive-form" action="#" method="get" style="margin-right: 5%;"> <!-- Database -->
+                <div class="dropdown">
+                    <label for="branchSelect"
+                        style="font-size: 14px; margin-right: 5px;"><strong>Branch:</strong></label>
+                    <select id="branchSelect">
+                        <option value="all">All</option>
+                    </select>
+                </div>
+
+                <label for="fromDate" style="padding-right: 5px; padding-left: 30px;"><strong>From</strong></label>
+                <input type="date" id="fromDate" name="fromDate" class="date-input">
+                <label for="toDate" style="padding-left: 5px; padding-right: 5px;"><strong>To</strong></label>
+                <input type="date" id="toDate" name="toDate" class="date-input">
+                <input type="search" id="search" name="query" placeholder="Search..." required>
+            </form>
+
+            <!-- TABLE -->
+            <div>
+                <h3>Archived Records</h3>
+                <table border="0.5" width="100%" id="archiveTable">
+                    <thead>
+                        <tr>
+                        <th style="width: 12.5%;">ID NUMBER</th>
+                        <th style="width: 12.5%;">NAME</th>
+                        <th style="width: 8%;">CITIZEN</th>
+                        <th style="width: 10%;">FOOD</th>
+                        <th style="width: 8%;">DATE</th>
+                        <th style="width: 6%;">TIME</th>
+                        <th style="width: 10%;">CASHIER</th>
+                        <th style="width: 5%;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archiveTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            <div id="paginationControls" class="pagination-controls"
+                style="display: flex; justify-content: center; margin-top: 20px; margin-left: 60px;">
+                <button class="pagination-controls-button" id="prevPage" disabled>Previous</button>
+                <span id="pageInfo"></span>
+                <button class="pagination-controls-button" id="nextPage">Next</button>
+            </div>
+            <!-- EXCEL BUTTON -->
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <a href="#" id="exportPdfBtn" class="download-btn" style="display: flex; align-items: center;">
+                    <img src="admin_images/pdf.png" alt="excelIcon" class="icon" style="margin-right: 5px;" />
+                    Download PDF
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Enter Password</h2>
+            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <button class="modal-password-btn" id="passwordSubmit">Submit</button>
+        </div>
+    </div>
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const tableBody = document.getElementById("archiveTableBody");
+            const fromDateInput = document.getElementById("fromDate");
+            const toDateInput = document.getElementById("toDate");
+            const searchInput = document.getElementById("search");
+            const branchSelect = document.getElementById("branchSelect");
+            const paginationControls = document.getElementById("paginationControls");
+            const prevPageButton = document.getElementById("prevPage");
+            const nextPageButton = document.getElementById("nextPage");
+            const pageInfo = document.getElementById("pageInfo");
+            const table = document.getElementById('archiveTable');
+            const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+            const warningDuration = 30 * 1000; // 30 seconds before logout
+
+                // Function to reset the inactivity timer
+                function resetTimer() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+                }
+
+                function showTimeoutWarning() {
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
+
+                warningModal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <h2>Session Timeout Warning</h2>
+                        <p>You will be logged out in 30 seconds due to inactivity.</p>
+                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
+                    </div>
+                `;
+
+                document.body.appendChild(warningModal);
+
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
+
+                    // Automatically log out after 30 seconds if no action is taken
+                    setTimeout(logout, warningDuration);
+                }
+
+                // Function to log out the user
+                function logout() {
+                    window.location.href = "logout.php"; // Redirect to the logout page
+                }
+
+                // Reset the timer on user activity
+                window.addEventListener("mousemove", resetTimer);
+                window.addEventListener("keydown", resetTimer);
+                window.addEventListener("scroll", resetTimer);
+                window.addEventListener("click", resetTimer);
+
+                // Start the inactivity timer
+                resetTimer();
+
+
+            let currentPage = 1;
+        
+            // Set the date inputs to the current date
+            const today = new Date().toISOString().split("T")[0];
+            fromDateInput.value = today;
+            toDateInput.value = today;
+        
+            // Fetch branches and populate the dropdown
+            function fetchBranches() {
+                fetch("superadmin_displayArchive.php?fetchBranches=true")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.branches) {
+                            populateBranchDropdown(data.branches);
+                        }
+                    })
+                    .catch(error => console.error("Error fetching branches:", error));
+            }
+        
+            function populateBranchDropdown(branches) {
+                branchSelect.innerHTML = `<option value="all">All</option>`;
+                branches.forEach(branch => {
+                    const option = document.createElement("option");
+                    option.value = branch.toLowerCase();
+                    option.textContent = branch;
+                    branchSelect.appendChild(option);
+                });
+            }
+        
+            function fetchData(page = 1) {
+                const fromDate = fromDateInput.value.trim();
+                const toDate = toDateInput.value.trim();
+                const query = searchInput.value.trim().toLowerCase();
+                const branch = branchSelect.value;
+        
+                let url = `superadmin_displayArchive.php?fromDate=${fromDate}&toDate=${toDate}&branch=${branch}&query=${query}&page=${page}`;
+        
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.records) {
+                            populateTable(data.records);
+                            setupPagination(data.totalPages, data.currentPage);
+                        } else {
+                            tableBody.innerHTML = "<tr><td colspan='12'>No records found.</td></tr>";
+                            paginationControls.style.display = "none";
+                        }
+                    })
+                    .catch(error => console.error("Error fetching data:", error));
+            }
+        
+            function populateTable(records) {
+                tableBody.innerHTML = "";
+        
+                if (records.length > 0) {
+                    records.forEach(record => {
+                        let row = `
+                            <tr>
+                                <td>${record.ID}</td>
+                                <td>${record.name}</td>
+                                <td>${record.citizen}</td>
+                                <td>${record.food}</td>
+                                <td>${record.date}</td>
+                                <td>${record.time}</td>
+                                <td>${record.cashier}</td>
+                                <td>${record.discounted_price}</td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    tableBody.innerHTML = "<tr><td colspan='13'>No records found.</td></tr>";
+                }
+            }
+        
+            function setupPagination(totalPages, currentPage) {
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                prevPageButton.disabled = currentPage === 1 || totalPages === 0;
+                nextPageButton.disabled = currentPage === totalPages || totalPages === 0;
+        
+                prevPageButton.onclick = () => {
+                    if (currentPage > 1) {
+                        fetchData(--currentPage);
+                    }
+                };
+        
+                nextPageButton.onclick = () => {
+                    if (currentPage < totalPages) {
+                        fetchData(++currentPage);
+                    }
+                };
+        
+                paginationControls.style.display = totalPages > 1 ? "block" : "none";
+            }
+        
+            // Event listeners
+            fromDateInput.addEventListener("change", () => fetchData(1));
+            toDateInput.addEventListener("change", () => fetchData(1));
+            searchInput.addEventListener("input", () => fetchData(1));
+            branchSelect.addEventListener("change", () => fetchData(1));
+        
+            // Initialize
+            fetchBranches();
+            fetchData(currentPage);
+        
+            function showImageModal(imageData) {
+                const modal = document.getElementById("imageModal");
+                const modalImage = document.getElementById("modalImage");
+                const closeBtn = document.querySelector("#imageModal .close");
+        
+                modalImage.src = `data:image/jpeg;base64,${imageData}`;
+                modal.style.display = "block";
+        
+                closeBtn.onclick = function () {
+                    modal.style.display = "none";
+                }
+        
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+            }
+        
+            document.getElementById("exportPdfBtn").addEventListener("click", function () {
+                const fromDate = document.getElementById("fromDate").value.trim();
+                const toDate = document.getElementById("toDate").value.trim();
+                const branch = document.getElementById("branchSelect").value;
+                const query = document.getElementById("search").value.trim();
+        
+                if (!fromDate || !toDate) {
+                    alert("Please select both 'From' and 'To' dates.");
+                    return;
+                }
+        
+                let url = `3.DownloadPDF.php?fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&branch=${encodeURIComponent(branch)}&query=${encodeURIComponent(query)}`;
+                window.location.href = url;
+            });
+        
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+        
+            document.getElementById("logoutButton").addEventListener("click", function () {
+                window.location.href = "logout.php";
+            });
+        
+            document.getElementById("accountManagementLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_accountManagement.html");
+            });
+        
+            document.getElementById("userAccountSettingsLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_accountSettings.html");
+            });
+        
+            document.getElementById("branchManagementLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_branchmgmt.html");
+            });
+        
+            function showPasswordModal(redirectUrl) {
+                const modal = document.getElementById("passwordModal");
+                const closeBtn = document.querySelector(".close");
+                const submitBtn = document.getElementById("passwordSubmit");
+        
+                modal.style.display = "block";
+        
+                closeBtn.onclick = function () {
+                    modal.style.display = "none";
+                }
+        
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+        
+                submitBtn.onclick = function () {
+                    const password = document.getElementById("passwordInput").value;
+                    if (password) {
+                        fetch("verify_password.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                            body: "password=" + encodeURIComponent(password)
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    window.location.href = redirectUrl;
+                                } else {
+                                    alert("Incorrect password. Please try again.");
+                                }
+                            })
+                            .catch(error => console.error("Error verifying password:", error));
+                    }
+                }
+            }
+        });
+        </script>
+</body>
+
+</html>

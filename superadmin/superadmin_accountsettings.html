@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calle Cafe - Superadmin Account Settings</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="admin_images/superadmin.png" type="image/png">
+
+</head>
+
+<body>
+    <div>
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <h2>Calle Cafe <small> (superadmin)</small></h2>
+            <ul>
+                <li><a href="superadmin_home.html">HOME</a></li>
+                <li><a href="superadmin_discountedCustomers.html">DISCOUNTED CUSTOMERS</a></li>
+                <li><a href="superadmin_archive.html">ARCHIVE</a></li>
+                <li><a href="#" id="accountManagementLink">ACCOUNT MANAGEMENT</a></li>
+                <li><a href="#" id="userAccountSettingsLink">SUPER ADMIN SETTINGS</a></li>
+                <li><a href="#" id="branchManagementLink">BRANCH MANAGEMENT</a></li>
+                <li><a id="logoutButton">LOGOUT</a></li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="account-settings-container">
+            <h2 style="margin: 20px;">Superadmin Settings</h2>
+
+            <!-- ACCOUNT SETTINGS -->
+            <div class="account-settings-user-info">
+                <h3 style="text-align: center;">Current Registered User</h3>
+                <p><strong>Name:</strong> <span id="currentName"></span></p>
+                <p><strong>Email:</strong> <span id="currentEmail"></span></p>
+            </div>
+
+            <div class="account-settings-user-info" style="text-align: center;">
+                <h3 style="text-align: center;">Update User Information</h3>
+                <form class="account-settings-form" onsubmit="event.preventDefault(); updateUser();">
+                    <input type="text" id="name" placeholder="Enter New complete name">
+                    <input type="email" id="email" placeholder="Enter New email address">
+                    <input type="password" id="password" placeholder="Enter New Password">
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                    <button type="submit">Update</button>
+                </form>
+            </div>
+    </div>
+
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Enter Password</h2>
+            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <button class="modal-password-btn" id="passwordSubmit">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+                const warningDuration = 30 * 1000; // 30 seconds before logout
+
+                // Function to reset the inactivity timer
+                function resetTimer() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+                }
+
+                function showTimeoutWarning() {
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
+
+                warningModal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <h2>Session Timeout Warning</h2>
+                        <p>You will be logged out in 30 seconds due to inactivity.</p>
+                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
+                    </div>
+                `;
+
+                document.body.appendChild(warningModal);
+
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
+
+                    // Automatically log out after 30 seconds if no action is taken
+                    setTimeout(logout, warningDuration);
+                }
+
+                // Function to log out the user
+                function logout() {
+                    window.location.href = "logout.php"; // Redirect to the logout page
+                }
+
+                // Reset the timer on user activity
+                window.addEventListener("mousemove", resetTimer);
+                window.addEventListener("keydown", resetTimer);
+                window.addEventListener("scroll", resetTimer);
+                window.addEventListener("click", resetTimer);
+
+                // Start the inactivity timer
+                resetTimer();
+           
+            fetch("5.users.php")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error(data.error);
+                        return;
+                    }
+
+                    document.getElementById("currentName").innerText = data.name;
+                    document.getElementById("currentEmail").innerText = data.email;
+                    document.getElementById("currentPassword").innerText = data.password;
+                })
+                .catch(error => console.error("Error fetching user data:", error));
+        });
+
+
+        function updateUser() {
+            var name = document.getElementById("name").value.trim();
+            var email = document.getElementById("email").value.trim();
+            var password = document.getElementById("password").value.trim();
+            var confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+
+            var userData = {};
+            if (name) userData.name = name;
+            if (email) userData.email = email;
+            if (password) userData.password = password;
+            if (confirmPassword) userData.confirmPassword = confirmPassword;
+
+
+            if (Object.keys(userData).length === 0) {
+                alert("Please fill in at least one field to update.");
+                return;
+            }
+
+            fetch("5.update_user.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(userData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        alert(data.success);
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error("Error updating user:", error));
+        }
+
+        document.getElementById("logoutButton").addEventListener("click", function () {
+            window.location.href = "logout.php";
+        });
+
+        window.history.pushState(null, "", window.location.href);
+        window.onpopstate = function () {
+            window.history.pushState(null, "", window.location.href);
+        };
+
+        document.getElementById("accountManagementLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            showPasswordModal("superadmin_accountManagement.html");
+        });
+
+        document.getElementById("userAccountSettingsLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            showPasswordModal("superadmin_accountSettings.html");
+
+        });
+
+        document.getElementById("branchManagementLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            showPasswordModal("superadmin_branchmgmt.html");
+        });
+
+        function showPasswordModal(redirectUrl) {
+            const modal = document.getElementById("passwordModal");
+            const closeBtn = document.querySelector(".close");
+            const submitBtn = document.getElementById("passwordSubmit");
+
+            modal.style.display = "block";
+
+            closeBtn.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            submitBtn.onclick = function () {
+                const password = document.getElementById("passwordInput").value;
+                if (password) {
+                    fetch("verify_password.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: "password=" + encodeURIComponent(password)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = redirectUrl;
+                            } else {
+                                alert("Incorrect password. Please try again.");
+                            }
+                        })
+                        .catch(error => console.error("Error verifying password:", error));
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>

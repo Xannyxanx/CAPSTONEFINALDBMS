@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Calle Cafe - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="images/browserlogo.png" type="browser logo">
+    <style>
+        /* Add basic styling to the body and form */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #554033;
+        }
+
+        .login-container {
+            background: #E0C1A6;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .toggle-password img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .login-btn-1 {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .login-btn-1:hover {
+            background: #0056b3;
+        }
+
+        #loginError {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="login-body">
+    <form class="login-container" id="loginForm">
+        <img src="images/cafecallelogo.png" alt="LOGO" width="180" height="180">
+
+        <input type="email" id="email" name="email" class="login-input" placeholder="Enter email address" required>
+        <br>
+
+        <div class="input-container">
+            <input type="password" id="password" name="password" class="login-input" placeholder="Enter Password"
+                required>
+            <button type="button" class="toggle-password" onclick="togglePassword()">
+                <img id="eyeIcon" src="images/hide.png" alt="Show Password">
+            </button>
+        </div>
+
+        <br>
+        <button type="submit" class="login-btn-1" id="submitButton">LOG IN</button>
+        <p id="loginError" style="padding-top: 10px;"></p>
+    </form>
+
+    <script>
+        let isLoggingIn = false;
+
+        document.getElementById("loginForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            if (isLoggingIn) return;
+
+            isLoggingIn = true;
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            const submitButton = document.getElementById("submitButton");
+            submitButton.disabled = true;
+
+            fetch("0.login.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.success) {
+                        window.location.href = "verify_otp.html";
+                    } else {
+                        document.getElementById("loginError").innerText = data.error;
+                    }
+                })
+                .catch(error => console.error("Fetch error:", error))
+                .finally(() => {
+                    submitButton.disabled = false;
+                    isLoggingIn = false;
+                });
+        });
+
+        // Toggle Password Visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById("password");
+            const eyeIcon = document.getElementById("eyeIcon");
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                eyeIcon.src = "images/show.png";
+            } else {
+                passwordInput.type = "password";
+                eyeIcon.src = "images/hide.png";
+            }
+        }
+
+        sessionStorage.clear();
+        localStorage.clear();
+    </script>
+</body>
+
+</html>

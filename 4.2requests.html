@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calle Cafe - Requests</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="images/browserlogo.png" type="image/png">
+</head>
+
+<body>
+    <div">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <h2>Calle Cafe
+                <span class="branch-name" id="branchName"></span>
+            </h2>
+            <ul>
+                <li><a href="1.home.html">HOME</a></li>
+                <li><a href="2.discounted_customers.html">DISCOUNTED CUSTOMERS</a></li>
+                <li><a href="3.archive.html">ARCHIVE</a></li>
+                <li><a href="#" id="accountManagementLink">ACCOUNT MANAGEMENT</a></li>
+                <li><a href="#" id="userAccountSettingsLink">USER ACCOUNT SETTINGS</a></li>
+                <li><a id="logoutButton">LOGOUT</a></li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main style="width: 80%; padding: 15px;">
+            <h2>User Requests</h2>
+            <form class="archive-form" action="#" method="get">
+                <div>
+                    <a href="4.1account_management.html" style="text-decoration: none;">
+                        <button type="button" id="currentBtn" class="requests-btn">REGISTERED USERS</button>
+                    </a>
+                    <input type="search" id="search" name="query" placeholder="Search..." required>
+                </div>
+            </form>
+
+            <!-- TABLE -->
+            <div>
+                <h3>Requests List</h3>
+                <table border="1" width="100%">
+                    <tr>
+                        <th style="width: 10%;">ID</th>
+                        <th>NAME</th>
+                        <th>USERNAME</th>
+                        <th style="width: 25%;">PIN</th>
+                        <th style="width: 15%;">Actions</th>
+                    </tr>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </main>
+        </div>
+
+        <div id="passwordModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Enter Password</h2>
+                <input class="modal-password-input" type="password" id="passwordInput"
+                    placeholder="Enter your password">
+                <button class="modal-password-btn" id="passwordSubmit">Submit</button>
+            </div>
+        </div>
+
+        <div class="modal"> <!-- LOGOUT MODAL -->
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Are you sure?</h2>
+                <button>Yes</button>
+                <button>No</button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                let requestData = [];
+                fetch("get_branch.php")
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // Debugging: Check the response
+                    const branchNameElement = document.getElementById("branchName");
+                    branchNameElement.textContent = data.branch || "Unknown Branch";
+                })
+                .catch(error => console.error("Error fetching branch name:", error));
+               
+                let timeout; // Variable to track inactivity timeout
+                const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+                const warningDuration = 30 * 1000; // 30 seconds before logout
+
+                // Function to reset the inactivity timer
+                function resetTimer() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+                }
+
+                function showTimeoutWarning() {
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
+
+                warningModal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <h2>Session Timeout Warning</h2>
+                        <p>You will be logged out in 30 seconds due to inactivity.</p>
+                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
+                    </div>
+                `;
+
+                document.body.appendChild(warningModal);
+
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
+
+                    // Automatically log out after 30 seconds if no action is taken
+                    setTimeout(logout, warningDuration);
+                }
+
+                // Function to log out the user
+                function logout() {
+                    window.location.href = "logout.php"; // Redirect to the logout page
+                }
+
+                // Reset the timer on user activity
+                window.addEventListener("mousemove", resetTimer);
+                window.addEventListener("keydown", resetTimer);
+                window.addEventListener("scroll", resetTimer);
+                window.addEventListener("click", resetTimer);
+
+                // Start the inactivity timer
+                resetTimer();
+
+                fetch("4.2dapitanUserRequest.php")
+                    .then(response => response.json())
+                    .then(data => {
+                        requestData = data;
+                        populateTable(requestData);
+                    })
+                    .catch(error => console.error("Error fetching user data:", error));
+
+                function populateTable(data) {
+                    let tableBody = document.getElementById("tableBody");
+                    tableBody.innerHTML = "";
+
+                    data.forEach(request => {
+                        let row = document.createElement("tr");
+
+                        let idCell = document.createElement("td");
+                        idCell.textContent = request.ID;
+
+                        let nameCell = document.createElement("td");
+                        nameCell.textContent = request.name;
+
+                        let usernameCell = document.createElement("td");
+                        usernameCell.textContent = request.username;
+
+                        let pinCell = document.createElement("td");
+                        pinCell.textContent = request.pin;
+
+                        let actionCell = document.createElement("td");
+                        actionCell.style.textAlign = "center";
+
+                        let approveBtn = document.createElement("button");
+                        approveBtn.classList.add("action-btn", "approve-btn");
+                        approveBtn.innerHTML = `<img src="images/approve.png" alt="Approve" class="icon">`;
+                        approveBtn.setAttribute("data-id", request.ID);
+                        approveBtn.addEventListener("click", function () {
+                            approveRequest(this.getAttribute("data-id"));
+                        });
+
+                        let declineBtn = document.createElement("button");
+                        declineBtn.classList.add("action-btn", "decline-btn");
+                        declineBtn.innerHTML = `<img src="images/decline.png" alt="Decline" class="icon">`;
+                        declineBtn.setAttribute("data-id", request.ID);
+                        declineBtn.addEventListener("click", function () {
+                            declineRequest(this.getAttribute("data-id"));
+                        });
+
+                        let buttonContainer = document.createElement("div");
+                        buttonContainer.classList.add("action-buttons");
+                        buttonContainer.style.display = "flex";
+                        buttonContainer.style.gap = "5px";
+                        buttonContainer.appendChild(approveBtn);
+                        buttonContainer.appendChild(declineBtn);
+
+                        actionCell.appendChild(buttonContainer);
+
+                        row.appendChild(idCell);
+                        row.appendChild(nameCell);
+                        row.appendChild(usernameCell);
+                        row.appendChild(pinCell);
+                        row.appendChild(actionCell);
+
+                        tableBody.appendChild(row);
+                    });
+                }
+
+                document.getElementById("search").addEventListener("input", function () {
+                    let searchValue = this.value.toLowerCase();
+                    let filteredData = requestData.filter(user =>
+                        user.ID.toString().includes(searchValue) ||
+                        user.name.toLowerCase().includes(searchValue) ||
+                        user.username.toLowerCase().includes(searchValue) ||
+                        user.pin.toLowerCase().includes(searchValue)
+                    );
+
+                    populateTable(filteredData);
+                });
+
+                function approveRequest(userID) {
+                    if (!userID) {
+                        alert("Error: No user ID found.");
+                        return;
+                    }
+
+                    let confirmApproval = confirm("Are you sure you want to approve this user?");
+                    if (!confirmApproval) return;
+
+                    console.log("Approving User ID:", userID);
+
+                    fetch("approve.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: "id=" + encodeURIComponent(userID)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Response from server:", data);
+                            alert(data.message);
+                            if (data.status === "success") {
+                                location.reload();
+                            }
+                        })
+                        .catch(error => console.error("Error approving request:", error));
+                }
+
+                function declineRequest(userID) {
+                    if (!userID) {
+                        alert("Error: No user ID found.");
+                        return;
+                    }
+
+                    let confirmApproval = confirm("Are you sure you want to decline this user?");
+                    if (!confirmApproval) return;
+
+                    console.log("Deleting User ID:", userID);
+
+                    fetch("decline.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: "id=" + encodeURIComponent(userID)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Response from server:", data);
+                            alert(data.message);
+                            if (data.status === "success") {
+                                location.reload();
+                            }
+                        })
+                        .catch(error => console.error("Error approving request:", error));
+                }
+
+                document.getElementById("logoutButton").addEventListener("click", function () {
+                    window.location.href = "logout.php";
+                });
+
+                window.history.pushState(null, "", window.location.href);
+                window.onpopstate = function () {
+                    window.history.pushState(null, "", window.location.href);
+                };
+
+                document.getElementById("accountManagementLink").addEventListener("click", function (event) {
+                    event.preventDefault();
+                    showPasswordModal("4.1account_management.html");
+                });
+
+                document.getElementById("userAccountSettingsLink").addEventListener("click", function (event) {
+                    event.preventDefault();
+                    showPasswordModal("5.account_settings.html");
+                });
+
+                function showPasswordModal(redirectUrl) {
+                    const modal = document.getElementById("passwordModal");
+                    const closeBtn = document.querySelector(".close");
+                    const submitBtn = document.getElementById("passwordSubmit");
+
+                    modal.style.display = "block";
+
+                    closeBtn.onclick = function () {
+                        modal.style.display = "none";
+                    }
+
+                    window.onclick = function (event) {
+                        if (event.target == modal) {
+                            modal.style.display = "none";
+                        }
+                    }
+
+                    submitBtn.onclick = function () {
+                        const password = document.getElementById("passwordInput").value;
+                        if (password) {
+                            fetch("verify_password.php", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                body: "password=" + encodeURIComponent(password)
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        window.location.href = redirectUrl;
+                                    } else {
+                                        alert("Incorrect password. Please try again.");
+                                    }
+                                })
+                                .catch(error => console.error("Error verifying password:", error));
+                        }
+                    }
+                }
+            });
+        </script>
+</body>
+
+</html>

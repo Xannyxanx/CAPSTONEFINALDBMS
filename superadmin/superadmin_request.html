@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Calle Cafe - Super Admin Requests</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="admin_images/superadmin.png" type="image/png">
+</head>
+
+<body>
+    <div>
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <h2>Calle Cafe <small> (superadmin)</small></h2>
+            <ul>
+                <li><a href="superadmin_home.html">HOME</a></li>
+                <li><a href="superadmin_discountedCustomers.html">DISCOUNTED CUSTOMERS</a></li>
+                <li><a href="superadmin_archive.html">ARCHIVE</a></li>
+                <li><a href="#" id="accountManagementLink">ACCOUNT MANAGEMENT</a></li>
+                <li><a href="#" id="userAccountSettingsLink">SUPER ADMIN SETTINGS</a></li>
+                <li><a href="#" id="branchManagementLink">BRANCH MANAGEMENT</a></li>
+                <li><a id="logoutButton">LOGOUT</a></li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" style="width: 80%; padding: 15px;">
+            <h2>User Requests</h2>
+            <form class="archive-form" action="#" method="get" style="margin-right: 5%;">
+                <a href="superadmin_accountManagement.html" style="text-decoration: none;">
+                    <button type="button" id="currentBtn" class="requests-btn">REGISTERED USERS</button>
+                </a>
+
+                <!-- Dropdown for branch selection -->
+                <div class="dropdown" style="margin-top: 10px;">
+                    <select id="branchFilter">
+                        <option value="all">All</option>
+                    </select>
+                </div>
+
+                <input type="search" id="search" name="query" placeholder="Search..." required>
+            </form>
+
+            <!-- TABLE -->
+            <div>
+                <h3>Requests List</h3>
+                <table border="0.5" width="100%">
+                    <tr>
+                        <th style="width: 10%;">ID</th>
+                        <th>NAME</th>
+                        <th style="width: 10%;">BRANCH</th>
+                        <th>USERNAME</th>
+                        <th style="width: 15%;">PIN</th>
+                        <th style="width: 15%;">Actions</th>
+                    </tr>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Enter Password</h2>
+            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <button class="modal-password-btn" id="passwordSubmit">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+            const warningDuration = 30 * 1000; // 30 seconds before logout
+
+                // Function to reset the inactivity timer
+                function resetTimer() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+                }
+
+                function showTimeoutWarning() {
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
+
+                warningModal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <h2>Session Timeout Warning</h2>
+                        <p>You will be logged out in 30 seconds due to inactivity.</p>
+                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
+                    </div>
+                `;
+
+                document.body.appendChild(warningModal);
+
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
+
+                    // Automatically log out after 30 seconds if no action is taken
+                    setTimeout(logout, warningDuration);
+                }
+
+                // Function to log out the user
+                function logout() {
+                    window.location.href = "logout.php"; // Redirect to the logout page
+                }
+
+                // Reset the timer on user activity
+                window.addEventListener("mousemove", resetTimer);
+                window.addEventListener("keydown", resetTimer);
+                window.addEventListener("scroll", resetTimer);
+                window.addEventListener("click", resetTimer);
+
+                // Start the inactivity timer
+                resetTimer();
+
+
+
+            document.getElementById("logoutButton").addEventListener("click", function () {
+                window.location.href = "logout.php";
+            });
+
+            document.getElementById("accountManagementLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_accountManagement.html");
+            });
+
+            document.getElementById("userAccountSettingsLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_accountSettings.html");
+
+            });
+
+            document.getElementById("branchManagementLink").addEventListener("click", function (event) {
+                event.preventDefault();
+                showPasswordModal("superadmin_branchmgmt.html");
+            });
+
+
+
+            function showPasswordModal(redirectUrl) {
+                const modal = document.getElementById("passwordModal");
+                const closeBtn = document.querySelector(".close");
+                const submitBtn = document.getElementById("passwordSubmit");
+
+                modal.style.display = "block";
+
+                closeBtn.onclick = function () {
+                    modal.style.display = "none";
+                }
+
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+
+                submitBtn.onclick = function () {
+                    const password = document.getElementById("passwordInput").value;
+                    if (password) {
+                        fetch("verify_password.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                            body: "password=" + encodeURIComponent(password)
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    window.location.href = redirectUrl;
+                                } else {
+                                    alert("Incorrect password. Please try again.");
+                                }
+                            })
+                            .catch(error => console.error("Error verifying password:", error));
+                    }
+                }
+            }
+
+
+            let requestData = [];
+
+            fetch("get_branch_user.php")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateBranchDropdown(data.branches);
+                    } else {
+                        console.error("Error fetching branches:", data.error);
+                    }
+                })
+                .catch(error => console.error("Error fetching branches:", error));
+
+            // Initial data load
+            loadRequestData("all");
+
+            // Function to populate branch dropdown
+            function populateBranchDropdown(branches) {
+                const branchFilter = document.getElementById("branchFilter");
+                // Clear existing options except "All"
+                branchFilter.innerHTML = '<option value="all">All</option>';
+
+                // Add branches from database
+                branches.forEach(branch => {
+                    const option = document.createElement("option");
+                    option.value = branch.toLowerCase();
+                    option.textContent = branch.charAt(0).toUpperCase() + branch.slice(1);
+                    branchFilter.appendChild(option);
+                });
+
+                // Add event listener to the populated dropdown
+                branchFilter.addEventListener("change", function () {
+                    const selectedBranch = this.value.toLowerCase();
+                    loadRequestData(selectedBranch);
+                });
+            }
+
+            // Function to load request data by branch
+            function loadRequestData(branch) {
+                fetch(`superadmin_request.php?branch=${branch}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        requestsData = data;
+                        populateTable(requestsData);
+                    })
+                    .catch(error => console.error("Error fetching request data:", error));
+            }
+
+            fetch("superadmin_request.php")
+                .then(response => response.json())
+                .then(data => {
+                    requestData = data;
+                    populateTable(requestData);
+                })
+                .catch(error => console.error("Error fetching user data:", error));
+
+            function populateTable(data) {
+                let tableBody = document.getElementById("tableBody");
+                tableBody.innerHTML = "";
+
+                data.forEach(request => {
+                    let row = document.createElement("tr");
+
+                    let idCell = document.createElement("td");
+                    idCell.textContent = request.ID;
+
+                    let nameCell = document.createElement("td");
+                    nameCell.textContent = request.name;
+
+                    let branchCell = document.createElement("td");
+                    branchCell.textContent = request.branch;
+                    branchCell.setAttribute("data-branch-id", request.ID);
+
+                    let usernameCell = document.createElement("td");
+                    usernameCell.textContent = request.username;
+                    usernameCell.setAttribute("data-username-id", request.ID);
+
+                    let pinCell = document.createElement("td");
+                    pinCell.textContent = request.pin;
+                    pinCell.setAttribute("data-pin-id", request.ID);
+
+                    let actionCell = document.createElement("td");
+                    actionCell.style.textAlign = "center";
+
+                    let approveBtn = document.createElement("button");
+                    approveBtn.classList.add("action-btn", "approve-btn");
+                    approveBtn.innerHTML = `<img src="admin_images/approve.png" alt="Approve" class="icon">`;
+                    approveBtn.setAttribute("data-id", request.ID);
+                    approveBtn.addEventListener("click", function () {
+                        approveRequest(this.getAttribute("data-id"));
+                    });
+
+                    let declineBtn = document.createElement("button");
+                    declineBtn.classList.add("action-btn", "decline-btn");
+                    declineBtn.innerHTML = `<img src="admin_images/decline.png" alt="Decline" class="icon">`;
+                    declineBtn.setAttribute("data-id", request.ID);
+                    declineBtn.addEventListener("click", function () {
+                        declineRequest(this.getAttribute("data-id"));
+                    });
+
+                    let buttonContainer = document.createElement("div");
+                    buttonContainer.classList.add("action-buttons");
+                    buttonContainer.style.display = "flex";
+                    buttonContainer.style.gap = "5px";
+                    buttonContainer.appendChild(approveBtn);
+                    buttonContainer.appendChild(declineBtn);
+
+                    actionCell.appendChild(buttonContainer);
+
+                    row.appendChild(idCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(branchCell);
+                    row.appendChild(usernameCell);
+                    row.appendChild(pinCell);
+                    row.appendChild(actionCell);
+
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // Search functionality
+            document.getElementById("search").addEventListener("input", function () {
+                let searchValue = this.value.toLowerCase();
+                let filteredData = requestData.filter(user =>
+                    user.ID.toString().includes(searchValue) ||
+                    user.name.toLowerCase().includes(searchValue) ||
+                    user.username.toLowerCase().includes(searchValue) ||
+                    user.pin.toLowerCase().includes(searchValue)
+                );
+
+                populateTable(filteredData);
+            });
+
+            // Approve request
+            function approveRequest(userID) {
+                if (!userID) {
+                    alert("Error: No user ID found.");
+                    return;
+                }
+
+                let confirmApproval = confirm("Are you sure you want to approve this user?");
+                if (!confirmApproval) return;
+
+                fetch("approve.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "id=" + encodeURIComponent(userID)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.status === "success") {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error("Error approving request:", error));
+            }
+
+            // Decline request
+            function declineRequest(userID) {
+                if (!userID) {
+                    alert("Error: No user ID found.");
+                    return;
+                }
+
+                let confirmApproval = confirm("Are you sure you want to decline this user?");
+                if (!confirmApproval) return;
+
+                fetch("decline.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "id=" + encodeURIComponent(userID)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.status === "success") {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error("Error declining request:", error));
+            }
+        });
+    </script>
+</body>
+
+</html>
+<!DOCTYPE html>
+<html>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let requestData = [];
+
+        fetch("4.2dapitanUserRequest.php")
+            .then(response => response.json())
+            .then(data => {
+                requestData = data;
+                populateTable(requestData);
+            })
+            .catch(error => console.error("Error fetching user data:", error));
+
+        function populateTable(data) {
+            let tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+
+            data.forEach(request => {
+                let row = document.createElement("tr");
+
+                let idCell = document.createElement("td");
+                idCell.textContent = request.ID;
+
+                let nameCell = document.createElement("td");
+                nameCell.textContent = request.name;
+
+                let branchCell = document.createElement("td");
+                branchCell.textContent = request.branch;
+
+                let usernameCell = document.createElement("td");
+                usernameCell.textContent = request.username;
+
+                let pinCell = document.createElement("td");
+                pinCell.textContent = request.pin;
+
+                let actionCell = document.createElement("td");
+                actionCell.style.textAlign = "center";
+
+                let approveBtn = document.createElement("button");
+                approveBtn.classList.add("action-btn", "approve-btn");
+                approveBtn.innerHTML = `<img src="images/approve.png" alt="Approve" class="icon">`;
+                approveBtn.setAttribute("data-id", request.ID);
+                approveBtn.addEventListener("click", function () {
+                    approveRequest(this.getAttribute("data-id"));
+                });
+
+                let declineBtn = document.createElement("button");
+                declineBtn.classList.add("action-btn", "decline-btn");
+                declineBtn.innerHTML = `<img src="images/decline.png" alt="Decline" class="icon">`;
+                declineBtn.setAttribute("data-id", request.ID);
+                declineBtn.addEventListener("click", function () {
+                    declineRequest(this.getAttribute("data-id"));
+                });
+
+                let buttonContainer = document.createElement("div");
+                buttonContainer.classList.add("action-buttons");
+                buttonContainer.style.display = "flex";
+                buttonContainer.style.gap = "5px";
+                buttonContainer.appendChild(approveBtn);
+                buttonContainer.appendChild(declineBtn);
+
+                actionCell.appendChild(buttonContainer);
+
+                row.appendChild(idCell);
+                row.appendChild(nameCell);
+                row.appendChild(branchCell);
+                row.appendChild(usernameCell);
+                row.appendChild(pinCell);
+                row.appendChild(actionCell);
+
+                tableBody.appendChild(row);
+            });
+
+            // Hide/show actions column based on branch filter
+            const branchFilter = document.getElementById("branchFilter");
+            const actionCells = document.querySelectorAll("td:nth-child(6)");
+            branchFilter.addEventListener("change", function () {
+                const selectedBranch = this.value;
+                actionCells.forEach(cell => {
+                    cell.style.display = selectedBranch === "all" ? "table-cell" : "none";
+                });
+            });
+        }
+
+        // Search functionality
+        document.getElementById("search").addEventListener("input", function () {
+            let searchValue = this.value.toLowerCase();
+            let filteredData = requestData.filter(user =>
+                user.ID.toString().includes(searchValue) ||
+                user.name.toLowerCase().includes(searchValue) ||
+                user.username.toLowerCase().includes(searchValue) ||
+                user.pin.toLowerCase().includes(searchValue)
+            );
+
+            populateTable(filteredData);
+        });
+
+        // Approve request
+        function approveRequest(userID) {
+            if (!userID) {
+                alert("Error: No user ID found.");
+                return;
+            }
+
+            let confirmApproval = confirm("Are you sure you want to approve this user?");
+            if (!confirmApproval) return;
+
+            fetch("approve.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "id=" + encodeURIComponent(userID)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.status === "success") {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error("Error approving request:", error));
+        }
+
+        // Decline request
+        function declineRequest(userID) {
+            if (!userID) {
+                alert("Error: No user ID found.");
+                return;
+            }
+
+            let confirmApproval = confirm("Are you sure you want to decline this user?");
+            if (!confirmApproval) return;
+
+            fetch("decline.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "id=" + encodeURIComponent(userID)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.status === "success") {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error("Error declining request:", error));
+        }
+    });
+</script>
+</body>
+
+</html>

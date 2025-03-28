@@ -1,0 +1,686 @@
+/* LOGIN PAGE START */
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #554033;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+.login-container {
+    background: #E0C1A6;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: center;
+}
+
+.login-title {
+    margin-bottom: 20px;
+}
+
+.login-label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.login-btn-1 {
+    width: 100%;
+    padding: 10px;
+    background: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.login-btn-1:hover {
+    background: #0056b3;
+}
+
+/* LOGIN PAGE END */
+/* SIDEBAR START */
+
+
+body {
+    background-color: #E0C1A6;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+nav {
+    width: 20%;
+    background-color: #554033;
+    padding: 15px;
+    color: #E0C1A6;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+
+}
+
+nav h2 {
+    color: #E0C1A6;
+    font-weight: bolder;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    margin: 10px 0;
+}
+
+nav ul li a {
+    color: #E0C1A6;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    transition: background-color 0s, color 0s;
+    font-weight: bold;
+}
+
+nav ul li a:hover {
+    background-color: #E0C1A6;
+    color: #554033;
+    width: 100%;
+}
+
+
+.main-content h1 {
+    color: #5C4033;
+    font-weight: bolder;
+}
+
+main {
+    width: 80%;
+    margin-left: 22%;
+    padding: 15px;
+}
+
+/* SIDEBAR END */
+/* ARCHIVE START */
+.archive-form {
+    position: relative;
+    float: right;
+    margin-right: 5%;
+}
+
+.archive-form input {
+    height: 34px;
+    border-radius: 20px;
+    padding-left: 35px;
+    border-color: #ddd;
+    border: 1px solid #ddd;
+    box-shadow: none;
+    margin-bottom: 10px;
+    font-size: 13px;
+    background-color: #efe4d4;
+    color: #333;
+
+}
+
+.archive-form input:focus {
+    border-color: #007BFF;
+}
+
+.archive-form i {
+    color: #a0a5b1;
+    position: absolute;
+    font-size: 19px;
+    top: 8px;
+    left: 10px;
+}
+
+.date-input {
+
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    font-size: 13px;
+    background-color: #efe4d4;
+    cursor: pointer;
+    color: #333;
+    height: 34px;
+}
+
+.date-input:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+.registered-btn {
+    padding: 10px 15px;
+    background-color: #FF8C00;
+    color: #efe4d4;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.registered-btn:hover {
+    background-color: #E07B00;
+}
+
+.requests-btn {
+    padding: 10px 15px;
+    background-color: #00CBCB;
+    color: #efe4d4;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.requests-btn:hover {
+    background-color: #008B8B;
+}
+
+
+.download-btn {
+    padding: 10px 15px;
+    background-color: #A13D2D;
+    color: #efe4d4;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.0s ease;
+}
+
+.download-btn:hover {
+    background-color: #822F22;
+}
+
+/* ARCHIVE END */
+
+/*ACCOUNT MANAGEMENT PAGE START*/
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #28a745;
+    /* Green color for activated state */
+    transition: 0s;
+    border-radius: 20px;
+    transition: background 0.1s ease
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+
+    bottom: 2px;
+    background-color: #efe4d4;
+    transition: 0s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #f44336;
+
+}
+
+input:checked+.slider:before {
+    transform: translateX(14px);
+
+}
+
+/*ACCOUNT MANAGEMENT PAGE END*/
+
+/*REQUEST ACCT MGMT PAGE START*/
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+td {
+    text-align: center;
+    vertical-align: middle;
+    /* Aligns content vertically */
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.approve-btn {
+    background-color: transparent;
+    color: white;
+}
+
+.approve-btn:hover {
+    background-color: #e6e6e6;
+}
+
+.decline-btn {
+    background-color: transparent;
+    color: #efe4d4;
+}
+
+.decline-btn:hover {
+    background-color: #e6e6e6;
+}
+
+.icon {
+    width: 15px;
+    height: 15px;
+}
+
+.edit-btn {
+    padding: 10px 15px;
+    background-color: #FDDA0D;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.0s ease;
+}
+
+/*#bca102*/
+.edit-btn:hover {
+    background-color: #d5b602;
+}
+
+.archive-btn {
+    padding: 10px 15px;
+    background-color: #FC680A;
+    color: #efe4d4;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.0s ease;
+    text-align: center;
+}
+
+.archive-btn:hover {
+    background-color: #B14801;
+}
+
+/*REQUEST ACCT MGMT PAGE END*/
+
+/* ACCOUNTS SETTINGS START*/
+/* Center the main content */
+.account-settings-container {
+    flex-grow: 1;
+    background-color: transparent;
+    width: 25%;
+    margin-left: 22%;
+    padding: 15px;
+
+}
+
+.account-settings-container h2 {
+    font-size: 1.75rem;
+    margin-bottom: 15px;
+}
+
+.account-settings-user-info {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.account-settings-user-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.account-settings-user-info p {
+    font-size: 0.95rem;
+    margin: 8px 0;
+}
+
+.account-settings-form label {
+    display: block;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.account-settings-form input {
+    width: 90%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.account-settings-form button {
+    background-color: #007BFF;
+    color: #efe4d4;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 15px;
+}
+
+.account-settings-form button:hover {
+    background-color: #0056b3;
+}
+
+/* ACCOUNTS SETTINGS END*/
+
+/*TABLE STYLING START*/
+table {
+    width: 95%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    border: 0.5px;
+}
+
+table th,
+table td {
+    border: 0.3px solid black;
+    padding: 8px;
+    text-align: center;
+}
+
+table th {
+    background-color: #556b2f;
+    color: #efe4d4;
+    font-weight: bold;
+}
+
+table tr:hover {
+    background-color: #E0E0E0;
+}
+
+/*TABLE STYLING END*/
+
+.live-counters {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.counter-box {
+    background: #556b2f;
+    color: #efe4d4;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 150px;
+
+}
+
+.charts-container {
+    display: flex;
+    /* Makes items align side by side */
+    align-items: center;
+    /* Aligns items vertically */
+    gap: 20px;
+    /* Adds space between charts */
+    width: 90%;
+    /* Ensures it stretches fully */
+}
+
+canvas {
+    max-width: 400px;
+    max-height: 300px;
+}
+
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding-top: 60px;
+}
+
+
+.modal-content {
+    background-color: #554033;
+    margin: 5% auto;
+    padding: 20px;
+    border: none;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 280px;
+    text-align: center;
+    color: #efe4d4;
+    margin-bottom: 20px;
+
+}
+
+.modal-password-input {
+    width: 100%;
+    text-align: center;
+    color: slategray;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+
+}
+
+.modal-password-btn {
+    width: 100%;
+    padding: 10px;
+    background: #007BFF;
+    color: #efe4d4;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.modal-password-btn:hover {
+    background: #0056b3;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.charts-container {
+    display: flex;
+    /* Makes items align side by side */
+    justify-content: space-between;
+    /* Distributes space evenly */
+    align-items: center;
+    /* Aligns items vertically */
+    gap: 20px;
+    /* Adds space between charts */
+    width: 95%;
+    /* Ensures it stretches fully */
+}
+
+.chart-box {
+    flex: 1;
+    /* Ensures equal width */
+    text-align: center;
+    /* Centers the headings */
+}
+
+canvas {
+    max-width: 100%;
+    /* Prevents overflow */
+    height: 300px;
+    /* Fixes chart height */
+}
+
+/*SUPER ADMIN STUFF*/
+.dropdown {
+    display: inline-block;
+    margin-right: 3px;
+    margin-left: 3px;
+    font-size: 10px;
+    margin-top: 10px;
+}
+
+.dropdown select {
+    font-size: 10px;
+    height: 34px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    padding: 0 10px;
+    font-size: 14px;
+    background-color: #efe4d4;
+    color: #333;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pagination-controls-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s, transform 0.2s;
+    font-size: 14px;
+}
+
+/* This should now only affect pagination buttons */
+.pagination-controls-button:hover:not(:disabled) {
+    background-color: #0056b3;
+    /* Darker blue on hover */
+    transform: scale(1.05);
+    /* Slight scale effect on hover */
+}
+
+.pagination-controls button:disabled {
+    background-color: #c0c0c0;
+    /* Grey background for disabled state */
+    cursor: not-allowed;
+    /* Not-allowed cursor for disabled button */
+}
+
+.pagination-controls span {
+    margin: 0 10px;
+    /* Space around page info */
+    font-size: 16px;
+    /* Font size for page info */
+    color: #333;
+    /* Darker text color */
+}
+
+.toggle-columns-btn {
+    padding: 10px 15px;
+    background-color: #556b2f;
+    color: #efe4d4;
+    margin: 0 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+/* This will work only on the toggle button now */
+.toggle-columns-btn:hover {
+    background-color: #45a049;
+    /* Keep this specific hover effect */
+}
+
+.branch-name {
+    display: inline-block;
+    font-size: 14px;
+    color: #FFFFFF; /* White text for contrast */
+    background: linear-gradient(90deg, #FF8C00, #FF4500); /* Gradient background for a modern look */
+    padding: 5px 15px;
+    margin-left: 15px;
+    border-radius: 20px; /* Rounded pill shape */
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    animation: fadeIn 1s ease-in-out; /* Smooth fade-in effect */
+}
+
+/* Add a subtle hover effect */
+.branch-name:hover {
+    background: linear-gradient(90deg, #FF4500, #FF8C00); /* Reverse gradient on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

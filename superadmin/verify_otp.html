@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calle Cafe - OTP</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="images/browserlogo.png" type="browser logo">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #554033;
+        }
+
+        .container {
+            background: #E0C1A6;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #invalidOtp {
+            margin-top: 10px;
+            font-size: 14px;
+            color: red;
+        }
+
+        #timer {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #008000;
+        }
+
+        #resendOtp {
+            margin-top: 10px;
+            display: none;
+        }
+
+        #resendOtp a {
+            text-decoration: none;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #resendOtp a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img src="images/cafecallelogo.png" alt="LOGO" width="180" height="180">
+        <h2>Enter OTP</h2>
+        <form id="otpForm">
+            <input type="text" id="otp" name="otp" placeholder="Enter OTP" required>
+            <button type="submit">Verify OTP</button>
+        </form>
+        <p id="invalidOtp"></p>
+        <p id="timer"></p>
+        <p id="resendOtp">
+            <a href="#" id="resendOtpLink">Resend OTP</a>
+        </p>
+    </div>
+    <script>
+        document.getElementById("otpForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const otp = document.getElementById("otp").value.trim();
+
+            fetch("verify_otp.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ otp })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // Log the response data
+                    if (data.success) {
+                        window.location.href = "1.home.html";
+                    } else {
+                        document.getElementById("invalidOtp").innerText = data.error;
+                    }
+                })
+                .catch(error => console.error("Fetch error:", error));
+        });
+
+        let timeLeft = 180; // 5 minutes in seconds
+        const timerElement = document.getElementById("timer");
+        const resendOtpElement = document.getElementById("resendOtp");
+
+        const countdown = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerElement.innerText = "OTP has expired. Please request a new one.";
+                document.getElementById("otpForm").querySelector("button").disabled = true;
+                resendOtpElement.style.display = "block"; // Show the resend OTP link
+            } else {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.innerText = `Time remaining: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                timeLeft--;
+            }
+        }, 1000);
+
+        document.getElementById("resendOtpLink").addEventListener("click", function (event) {
+            event.preventDefault();
+            fetch("send_otp.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email: "<?php echo $_SESSION['email']; ?>" })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("A new OTP has been sent to your email.");
+                        location.reload();
+                    } else {
+                        alert("Error resending OTP. Please try again.");
+                    }
+                })
+                .catch(error => console.error("Fetch error:", error));
+        });
+    </script>
+</body>
+
+</html>
