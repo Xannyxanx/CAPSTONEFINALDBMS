@@ -1,4 +1,5 @@
 <?php
+ob_start(); 
 session_start();
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -18,10 +19,10 @@ if ($conn->connect_error) {
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: 0.login.html");
+    header("Location: index.html");
     exit();
 }
-
+ob_end_flush();
 // Prevent returning to verify_otp.html if already logged in
 if (isset($_SESSION['otp_verified']) && $_SESSION['otp_verified'] === true) {
     header("Location: 1.home.html"); // Redirect to the home page or any other page

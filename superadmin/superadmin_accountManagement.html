@@ -81,63 +81,7 @@
     <script>
           document.addEventListener("DOMContentLoaded", function () {
             let usersData = [];
-            const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
-                const warningDuration = 30 * 1000; // 30 seconds before logout
-
-                // Function to reset the inactivity timer
-                function resetTimer() {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
-                }
-
-                function showTimeoutWarning() {
-                const warningModal = document.createElement("div");
-                warningModal.id = "timeoutWarningModal";
-                warningModal.style.position = "fixed";
-                warningModal.style.top = "0";
-                warningModal.style.left = "0";
-                warningModal.style.width = "100%";
-                warningModal.style.height = "100%";
-                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-                warningModal.style.display = "flex";
-                warningModal.style.justifyContent = "center";
-                warningModal.style.alignItems = "center";
-                warningModal.style.zIndex = "1000";
-
-                warningModal.innerHTML = `
-                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
-                        <h2>Session Timeout Warning</h2>
-                        <p>You will be logged out in 30 seconds due to inactivity.</p>
-                        <button id="stayLoggedInButton" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Stay Logged In</button>
-                    </div>
-                `;
-
-                document.body.appendChild(warningModal);
-
-                // Add event listener to the "Stay Logged In" button
-                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
-                    document.body.removeChild(warningModal);
-                    resetTimer(); // Reset the timer
-                });
-
-                    // Automatically log out after 30 seconds if no action is taken
-                    setTimeout(logout, warningDuration);
-                }
-
-                // Function to log out the user
-                function logout() {
-                    window.location.href = "logout.php"; // Redirect to the logout page
-                }
-
-                // Reset the timer on user activity
-                window.addEventListener("mousemove", resetTimer);
-                window.addEventListener("keydown", resetTimer);
-                window.addEventListener("scroll", resetTimer);
-                window.addEventListener("click", resetTimer);
-
-                // Start the inactivity timer
-                resetTimer();
-            // Fetch available branches first
+            
             fetch("get_branch_user.php")
                 .then(response => response.json())
                 .then(data => {
