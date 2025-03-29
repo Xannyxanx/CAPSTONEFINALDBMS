@@ -1,3 +1,22 @@
+<?php
+session_start();
+
+// 1. Only allow access if coming from password verification 
+if (!isset($_SESSION['verified']) || $_SESSION['verified'] !== true) {
+    header("Location: 1.home.html"); // Redirect to home
+    exit();
+}
+
+// 2. Only allow access via approved referrers
+$allowed_referrers = ["verify_password.php", "1.home.html"]; // Update with your actual password verification page
+$referrer = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH);
+$referrer = basename($referrer);
+
+if (!in_array($referrer, $allowed_referrers)) {
+    header("Location: 1.home.html");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -121,16 +140,12 @@
         document.getElementById("otpForm").addEventListener("submit", function (event) {
             event.preventDefault();
 
-            // Prevent multiple submissions
-            if (isVerifying) {
-                return;
-            }
-
             const submitButton = document.getElementById("submitButton");
-            isVerifying = true; // Set the flag to indicate verification in progress
 
-            // Disable the button to prevent further clicks
+            // Disable the button immediately and apply the disabled style
             submitButton.disabled = true;
+            submitButton.style.background = "rgba(166, 206, 248, 0.5)";
+            submitButton.style.cursor = "not-allowed";
 
             const otp = document.getElementById("otp").value.trim();
 
@@ -143,18 +158,24 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data); // Log the response data
+                    console.log(data);
                     if (data.success) {
-                        window.location.href = data.redirect; // Redirect to the appropriate page
+                        // Redirect to the appropriate page on successful OTP verification
+                        window.location.href = data.redirect;
                     } else {
+                        // Show error message and re-enable the button if verification fails
                         document.getElementById("invalidOtp").innerText = data.error;
+                        submitButton.disabled = false;
+                        submitButton.style.background = ""; // Reset background
+                        submitButton.style.cursor = "pointer"; // Reset cursor
                     }
                 })
-                .catch(error => console.error("Fetch error:", error))
-                .finally(() => {
-                    // Enable button and reset flag after processing
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                    // Re-enable the button on error
                     submitButton.disabled = false;
-                    isVerifying = false; // Reset the flag
+                    submitButton.style.background = ""; // Reset background
+                    submitButton.style.cursor = "pointer"; // Reset cursor
                 });
         });
 
@@ -214,6 +235,39 @@
                     isVerifying = false; // Allow another resend attempt after processing
                 });
         });
+
+        (function() {
+                // 1. Break initial history
+                history.pushState(null, null, location.href);
+                
+                // 2. Continuously flood history stack
+                setInterval(() => {
+                    history.replaceState(null, null, location.href);
+                    history.pushState(null, null, location.href);
+                }, 100);
+                
+                // 3. Redirect any back attempts
+                window.onpopstate = function() {
+                    window.location.replace("1.home.html?t=" + Date.now());
+                };
+                
+                // 4. Special handling for restricted pages
+                const restrictedPages = ["4.1account_management.html", "5.account_settings.html", "verify_otp.html", "verify_otp.html", "index.html"];
+                if (restrictedPages.some(page => location.pathname.includes(page))) {
+                    // Force reload if they somehow get through
+                    window.addEventListener('pageshow', (event) => {
+                        if (event.persisted) {
+                            window.location.replace("1.home.html");
+                        }
+                    });
+                    
+                    // Additional protection against direct access
+                    const referrer = document.referrer ? new URL(document.referrer).pathname.split('/').pop() : null;
+                    if (!referrer || !allowed_referrers.includes(referrer)) {
+                        window.location.replace("1.home.html");
+                    }
+                }
+            })();
     </script>
 </body>
 

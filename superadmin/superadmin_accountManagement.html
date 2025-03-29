@@ -1,3 +1,23 @@
+<?php
+session_start();
+
+// 1. Only allow access if coming from password verification 
+if (!isset($_SESSION['verified']) || $_SESSION['verified'] !== true) {
+    header("Location: superadmin_home.html"); // Redirect to home
+    exit();
+}
+
+// 2. Only allow access via approved referrers
+$allowed_referrers = ["verify_password.php", "superadmin_home.html"]; // Update with your actual password verification page
+$referrer = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH);
+$referrer = basename($referrer);
+
+if (!in_array($referrer, $allowed_referrers)) {
+    header("Location: superadmin_home.html");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html>
 
@@ -9,6 +29,9 @@
 </head>
 
 <body>
+    <script>
+        const allowed_referrers = <?php echo json_encode($allowed_referrers); ?>;
+    </script>
     <div class="container">
         <!-- SIDEBAR -->
         <nav class="sidebar">
@@ -380,6 +403,39 @@
                 populateTable(filteredData);
             });
         });
+
+        (function() {
+    // 1. Break initial history
+            history.pushState(null, null, location.href);
+            
+            // 2. Continuously flood history stack
+            setInterval(() => {
+                history.replaceState(null, null, location.href);
+                history.pushState(null, null, location.href);
+            }, 100);
+            
+            // 3. Redirect any back attempts
+            window.onpopstate = function() {
+                window.location.replace("superadmin_home.html?t=" + Date.now());
+            };
+            
+            // 4. Special handling for restricted pages
+            const restrictedPages = ["superadmin_accountManagement.html", "superadmin_accountsettings.html", "superadmin_branchmgmt.html"];
+            if (restrictedPages.some(page => location.pathname.includes(page))) {
+                // Force reload if they somehow get through
+                window.addEventListener('pageshow', (event) => {
+                    if (event.persisted) {
+                        window.location.replace("superadmin_home.html");
+                    }
+                });
+                
+                // Additional protection against direct access
+                const referrer = document.referrer ? new URL(document.referrer).pathname.split('/').pop() : null;
+                if (!referrer || !allowed_referrers.includes(referrer)) {
+                    window.location.replace("superadmin_home.html");
+                }
+            }
+        })();
     </script>
 </body>
 

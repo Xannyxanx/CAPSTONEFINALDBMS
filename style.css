@@ -684,3 +684,9 @@ canvas {
         transform: translateY(0);
     }
 }
+
+.login-btn-1:disabled {
+    background: rgba(166, 206, 248, 0.5); /* Make the button translucent */
+    cursor: not-allowed; /* Change the cursor to indicate it's disabled */
+    color: #ffffff;
+}

@@ -1,3 +1,31 @@
+<?php
+session_start();
+
+// Strong cache prevention headers
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+// 1. Only allow access if the user is verified
+if (!isset($_SESSION['verified']) || $_SESSION['verified'] !== true) {
+    header("Location: superadmin_home.html");
+    exit();
+}
+
+// 2. Only allow access via approved referrers
+$allowed_referrers = ["verify_password.php", "superadmin_home.html"];
+$referrer = parse_url($_SERVER['HTTP_REFERER'] ?? '', PHP_URL_PATH);
+$referrer = basename($referrer);
+
+if (!in_array($referrer, $allowed_referrers)) {
+    header("Location: superadmin_home.html");
+    exit();
+}
+
+// Store allowed referrers for JavaScript
+$allowed_referrers_js = json_encode($allowed_referrers);
+?>
+
 <!DOCTYPE html>
 <html>
 
@@ -5,7 +33,9 @@
     <title>Calle Cafe - Superadmin Account Settings</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="admin_images/superadmin.png" type="image/png">
-
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 </head>
 
 <body>
@@ -178,7 +208,74 @@
             }
         }
 
+                (function () {
+            // 1. Break initial history
+            history.pushState(null, null, location.href);
+
+            // 2. Continuously flood history stack
+            setInterval(() => {
+                history.replaceState(null, null, location.href);
+                history.pushState(null, null, location.href);
+            }, 100);
+
+            // 3. Redirect any back attempts
+            window.onpopstate = function () {
+                window.location.replace("superadmin_home.html?t=" + Date.now());
+            };
+
+            // 4. Special handling for restricted pages
+            const restrictedPages = ["superadmin_accountManagement.html", "superadmin_accountsettings.html", "superadmin_branchmgmt.html"];
+            if (restrictedPages.some(page => location.pathname.includes(page))) {
+                // Force reload if they somehow get through
+                window.addEventListener("pageshow", function (event) {
+                    if (event.persisted) {
+                        window.location.replace("superadmin_home.html");
+                    }
+                });
+
+                // Additional protection against direct access
+                const referrer = document.referrer ? new URL(document.referrer).pathname.split('/').pop() : null;
+                if (!referrer || !allowed_referrers.includes(referrer)) {
+                    window.location.replace("superadmin_home.html");
+                }
+            }
+        })();
     </script>
+    <script>
+        // Nuclear back button prevention
+        (function() {
+            // 1. Break initial history
+            history.pushState(null, null, location.href);
+            
+            // 2. Continuously flood history stack (every 100ms)
+            const floodHistory = setInterval(() => {
+                history.replaceState(null, null, location.href);
+                history.pushState(null, null, location.href);
+            }, 100);
+            
+            // 3. Redirect any back attempts
+            window.onpopstate = function() {
+                history.pushState(null, null, location.href);
+                window.location.replace("superadmin_home.html?t=" + Date.now());
+            };
+            
+            // 4. Force reload if page is restored from cache
+            window.addEventListener("pageshow", function(event) {
+                if (event.persisted) {
+                    window.location.replace("superadmin_home.html?t=" + Date.now());
+                }
+            });
+            
+            // 5. Additional referrer check
+            const allowedReferrers = <?php echo $allowed_referrers_js; ?>;
+            const referrer = document.referrer ? 
+                new URL(document.referrer).pathname.split('/').pop() : null;
+            
+            if (!referrer || !allowedReferrers.includes(referrer)) {
+                window.location.replace("superadmin_home.html?t=" + Date.now());
+            }
+        })();
+        </script>
 </body>
 
 </html>

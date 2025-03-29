@@ -16,7 +16,7 @@ if ($conn->connect_error) {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: 0.login.html");
+    header("Location: index.html");
     exit();
 }
 

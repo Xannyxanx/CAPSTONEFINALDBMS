@@ -101,15 +101,18 @@
         document.getElementById("loginForm").addEventListener("submit", function (event) {
             event.preventDefault();
 
-            if (isLoggingIn) return;
+            const submitButton = document.getElementById("submitButton");
 
-            isLoggingIn = true;
+            // Disable the button immediately
+            submitButton.disabled = true;
+            submitButton.style.pointerEvents = "none"; // Prevent further clicks
+
+            if (isLoggingIn) return; // Prevent multiple submissions
+
+            isLoggingIn = true; // Set the flag to indicate login is in progress
 
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
-
-            const submitButton = document.getElementById("submitButton");
-            submitButton.disabled = true;
 
             fetch("0.login.php", {
                 method: "POST",
@@ -122,15 +125,22 @@
                 .then(data => {
                     console.log(data);
                     if (data.success) {
+                        // Redirect to OTP verification page on successful login
                         window.location.href = "verify_otp.html";
                     } else {
+                        // Show error message and re-enable the button if login fails
                         document.getElementById("loginError").innerText = data.error;
+                        submitButton.disabled = false;
+                        submitButton.style.pointerEvents = "auto"; // Re-enable clicks
+                        isLoggingIn = false; // Reset the flag
                     }
                 })
-                .catch(error => console.error("Fetch error:", error))
-                .finally(() => {
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                    // Re-enable the button on error
                     submitButton.disabled = false;
-                    isLoggingIn = false;
+                    submitButton.style.pointerEvents = "auto"; // Re-enable clicks
+                    isLoggingIn = false; // Reset the flag
                 });
         });
 
