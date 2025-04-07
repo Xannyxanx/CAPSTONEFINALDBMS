@@ -174,9 +174,7 @@ if (!in_array($referrer, $allowed_referrers)) {
                 <h3 style="text-align: center;">Update Branch Account</h3>
                 <form class="account-settings-form" onsubmit="event.preventDefault(); updateBranch();">
                     <!-- Text field for new branch -->
-                    <select id="newBranch" style="margin-left: 20px; width: 50%;">
-                        <option value="">Select a new branch</option>
-                    </select>
+                    <input type="text" id="newBranch" placeholder="Enter New Branch">
                     <input type="text" id="name" placeholder="Enter New Name">
                     <input type="email" id="email" placeholder="Enter New Email">
                     <input type="password" id="password" placeholder="Enter New Password">
@@ -407,11 +405,15 @@ if (!in_array($referrer, $allowed_referrers)) {
         }
 
         // Simplify fetchAvailableBranches to handle branch dropdowns
+        let availableBranches = []; // Global variable to store available branches
+
         function fetchAvailableBranches() {
             fetch("get_available_branches.php")
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        availableBranches = data.branches.map(branch => branch.toLowerCase()); // Store branches in lowercase for case-insensitive comparison
+
                         const branchSelect = document.getElementById("branchSelect");
                         const newBranchSelect = document.getElementById("newBranch");
 
@@ -458,7 +460,7 @@ if (!in_array($referrer, $allowed_referrers)) {
                         });
                     } else {
                         alert(data.error);
-                        document.getElementById("userSelect").innerHTML = "<option value=''>Select a user</option>";
+                        document.getElementById("newBranch").value = "";
                         document.getElementById("name").value = "";
                         document.getElementById("email").value = "";
                     }
@@ -500,7 +502,7 @@ if (!in_array($referrer, $allowed_referrers)) {
         function updateBranch() {
             const branch = document.getElementById("branchSelect").value;
             const userId = document.getElementById("userSelect").value;
-            const newBranch = document.getElementById("newBranch").value.trim();
+            const newBranch = document.getElementById("newBranch").value.trim().toLowerCase(); // Convert to lowercase for comparison
             const name = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
@@ -508,6 +510,12 @@ if (!in_array($referrer, $allowed_referrers)) {
 
             if (!branch || !userId) {
                 alert("Please select a branch and a user.");
+                return;
+            }
+
+            // Check if the new branch is in the list of available branches
+            if (newBranch && !availableBranches.includes(newBranch)) {
+                alert("The branch you entered is not available. Please select a valid branch.");
                 return;
             }
 
@@ -567,12 +575,19 @@ if (!in_array($referrer, $allowed_referrers)) {
                 return;
             }
 
+            if ((pwdDiscount !== "" && (pwdDiscount <= 0 || isNaN(pwdDiscount))) ||
+                (seniorDiscount !== "" && (seniorDiscount <= 0 || isNaN(seniorDiscount))) ||
+                (othersDiscount !== "" && (othersDiscount <= 0 || isNaN(othersDiscount)))) {
+                alert("Discount values must be greater than 0 and valid numbers.");
+                return;
+            }
+
             // Create an array to hold the discount updates
             const discountUpdates = [];
 
             if (pwdDiscount !== "") {
-                if (isNaN(pwdDiscount) || pwdDiscount < 0 || pwdDiscount > 100) {
-                    alert("PWD discount must be a number between 0 and 100.");
+                if (pwdDiscount > 100) {
+                    alert("PWD discount must be a number between 1 and 100.");
                     return;
                 }
                 discountUpdates.push({
@@ -582,8 +597,8 @@ if (!in_array($referrer, $allowed_referrers)) {
             }
 
             if (seniorDiscount !== "") {
-                if (isNaN(seniorDiscount) || seniorDiscount < 0 || seniorDiscount > 100) {
-                    alert("Senior Citizen discount must be a number between 0 and 100.");
+                if (seniorDiscount > 100) {
+                    alert("Senior Citizen discount must be a number between 1 and 100.");
                     return;
                 }
                 discountUpdates.push({
@@ -593,8 +608,8 @@ if (!in_array($referrer, $allowed_referrers)) {
             }
 
             if (othersDiscount !== "") {
-                if (isNaN(othersDiscount) || othersDiscount < 0 || othersDiscount > 100) {
-                    alert("Others discount must be a number between 0 and 100.");
+                if (othersDiscount > 100) {
+                    alert("Others discount must be a number between 1 and 100.");
                     return;
                 }
                 discountUpdates.push({

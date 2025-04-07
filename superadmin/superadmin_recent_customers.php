@@ -60,7 +60,7 @@ if ($selectedBranch === 'all') {
         FROM dapitancustomers";
 } else {
     // Fetch customers for the selected branch
-    $sqlTable = "SELECT ID, name, citizen, food, date, time, cashier, discounted_price
+    $sqlTable = "SELECT ID, name, citizen, city, food, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number 
                  FROM dapitancustomers
                  WHERE LOWER(branch) = ?
                  ORDER BY time DESC 

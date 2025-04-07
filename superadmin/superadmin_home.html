@@ -3,6 +3,8 @@
 
 <head>
     <title>Calle Cafe - Super Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="admin_images/superadmin.png" type="browser logo">
@@ -128,6 +130,29 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <img id="modalImage" src="" alt="ID Image" style="width: 100%;">
+        </div>
+    </div>
+
+    <div id="groupOrderModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" id="closeGroupOrderModal">&times;</span>
+            <h2>Group Order Details</h2>
+            <table border="0.5" width="100%">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Name</th>
+                        <th style="width: 15%;">Citizen</th>
+                        <th style="width: 20%;">Food</th>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 10%;">Time</th>
+                        <th style="width: 10%;">Cashier</th>
+                        <th style="width: 10%;">Cost</th>
+                    </tr>
+                </thead>
+                <tbody id="groupOrderDetailsBody">
+                    <!-- Group order details will be dynamically populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -259,25 +284,89 @@
             // Populate the table with customer data
             function populateTable(customers) {
                 tableBody.innerHTML = "";
-                customers.forEach(customer => {
-                    const row = `
-                    <tr>
-                       <td>${customer.ID}</td>
+
+                if (customers.length > 0) {
+                    // Group customers by a combination of branch and control number
+                    const groupedOrders = customers.reduce((groups, customer) => {
+                        const groupKey = `${customer.branch}_${customer.control_number}`; // Combine branch and control number
+                        if (!groups[groupKey]) {
+                            groups[groupKey] = [];
+                        }
+                        groups[groupKey].push(customer);
+                        return groups;
+                    }, {});
+
+                    // Populate the table with grouped orders
+                    Object.keys(groupedOrders).forEach(groupKey => {
+                        const group = groupedOrders[groupKey];
+                        const firstCustomer = group[0];
+                        const totalCost = group.reduce((sum, customer) => sum + parseFloat(customer.discounted_price), 0);
+
+                        // Create a list of all food items in the group
+                        const foodList = group.map(customer => customer.food).join(", ");
+
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${group.length > 1 ? "GROUP ORDER" : firstCustomer.ID}</td>
+                            <td>${firstCustomer.name}</td>
+                            <td>${firstCustomer.citizen}</td>
+                            <td>${foodList}</td>
+                            <td>${firstCustomer.date}</td>
+                            <td>${firstCustomer.time}</td>
+                            <td>${firstCustomer.cashier}</td>
+                            <td>₱${totalCost.toFixed(2)} 
+                                ${group.length > 1 ? `<button class="showGroupOrderBtn" data-control="${groupKey}">Show All</button>` : ""}
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // Add event listeners for "Show All" buttons
+                    document.querySelectorAll(".showGroupOrderBtn").forEach(button => {
+                        button.addEventListener("click", function () {
+                            const groupKey = this.getAttribute("data-control");
+                            const group = groupedOrders[groupKey];
+                            showGroupOrderModal(group);
+                        });
+                    });
+                } else {
+                    tableBody.innerHTML = "<tr><td colspan='8'>No records found.</td></tr>";
+                }
+            }
+
+
+            function showGroupOrderModal(group) {
+                const modal = document.getElementById("groupOrderModal");
+                const modalBody = document.getElementById("groupOrderDetailsBody");
+
+                // Populate modal with group order details
+                modalBody.innerHTML = "";
+                group.forEach(customer => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
                         <td>${customer.name}</td>
                         <td>${customer.citizen}</td>
                         <td>${customer.food}</td>
                         <td>${customer.date}</td>
                         <td>${customer.time}</td>
                         <td>${customer.cashier}</td>
-                        <td>${customer.discounted_price}</td>
-                    </tr>
-                `;
-                    tableBody.innerHTML += row;
+                        <td>₱${parseFloat(customer.discounted_price).toFixed(2)}</td>
+                    `;
+                    modalBody.appendChild(row);
                 });
-                const optionalCells = document.querySelectorAll('#tableBody tr td.optional-column');
-                optionalCells.forEach(cell => {
-                    cell.style.display = toggleColumnsBtn.textContent === 'Show All' ? 'none' : '';
-                });
+
+                // Show the modal
+                modal.style.display = "block";
+
+                // Close modal functionality
+                document.getElementById("closeGroupOrderModal").onclick = function () {
+                    modal.style.display = "none";
+                };
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                };
             }
 
             // Update counters

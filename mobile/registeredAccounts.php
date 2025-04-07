@@ -29,6 +29,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
+    $checkQuery = "SELECT * FROM cashier_users WHERE username = ? AND branch = ?";
+    $checkStmt = $conn->prepare($checkQuery);
+    $checkStmt->bind_param("ss", $username, $branch);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+
+    if ($checkResult->num_rows > 0) {
+        // Username already exists for the selected branch
+        echo json_encode(["success" => false, "message" => "The username already exists for the selected branch."]);
+        $checkStmt->close();
+        $conn->close();
+        exit();
+    }
+
+
     $query = "INSERT INTO cashier_requests (name, username, pin, branch) VALUES (?, ?, ?, ?)";
  
     

@@ -3,7 +3,7 @@
 
 <head>
     <title>Calle Cafe - Dashboard</title>
-
+    <meta charset="UTF-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 
     <link rel="stylesheet" type="text/css" href="style.css">
@@ -125,6 +125,29 @@
         </div>
     </div>
 
+    <div id="groupOrderModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" id="closeGroupOrderModal">&times;</span>
+            <h2>Group Order Details</h2>
+            <table border="0.5" width="100%">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Name</th>
+                        <th style="width: 15%;">Citizen</th>
+                        <th style="width: 20%;">Food</th>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 10%;">Time</th>
+                        <th style="width: 10%;">Cashier</th>
+                        <th style="width: 10%;">Cost</th>
+                    </tr>
+                </thead>
+                <tbody id="groupOrderDetailsBody">
+                    <!-- Group order details will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             let pieChart, barChart;
@@ -235,45 +258,60 @@
             fetch("1.recent_customers.php")
                 .then(response => response.json())
                 .then(data => {
-                    let tableBody = document.getElementById("tableBody");
-                    let totalCustomers = document.getElementById("totalCustomers");
-                    let totalSenior = document.getElementById("totalSenior");
-                    let totalPWD = document.getElementById("totalPWD");
+                    console.log("Fetched Data:", data); // Debugging: Log the fetched data
 
-                    tableBody.innerHTML = "";
+                    const tableBody = document.getElementById("tableBody");
+                    const groupedOrders = data.customers.reduce((groups, customer) => {
+                        const controlNumber = customer.control_number;
+                        if (!groups[controlNumber]) {
+                            groups[controlNumber] = [];
+                        }
+                        groups[controlNumber].push(customer);
+                        return groups;
+                    }, {});
 
-                    let rows = "";
-                    data.customers.forEach(customer => {
-                        rows += `
-                        <tr>
-                        <td>${customer.ID}</td>
-                        <td>${customer.name}</td>
-                        <td>${customer.citizen}</td>
-                        <td>${customer.food}</td>
-                        <td>${customer.date}</td>
-                        <td>${customer.time}</td>
-                        <td>${customer.cashier}</td>
-                        <td>${customer.discounted_price}</td>
-                        </tr>
-                    `;
+                    tableBody.innerHTML = ""; // Clear the table body
+
+                    Object.keys(groupedOrders).forEach(controlNumber => {
+                        const group = groupedOrders[controlNumber];
+                        const firstCustomer = group[0];
+                        const totalCost = group.reduce((sum, customer) => sum + parseFloat(customer.discounted_price), 0);
+                        const foodList = group.map(customer => customer.food).join(", ");
+
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${group.length > 1 ? "GROUP ORDER" : firstCustomer.ID}</td>
+                            <td>${firstCustomer.name}</td>
+                            <td>${firstCustomer.citizen}</td>
+                            <td>${foodList}</td>
+                            <td>${firstCustomer.date}</td>
+                            <td>${firstCustomer.time}</td>
+                            <td>${firstCustomer.cashier}</td>
+                            <td>₱${totalCost.toFixed(2)} 
+                                ${group.length > 1 ? `<button class="showGroupOrderBtn" data-control="${controlNumber}">Show All</button>` : ""}
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
                     });
 
-                    tableBody.innerHTML = rows;
+                    // Add event listeners for "Show All" buttons
+                    document.querySelectorAll(".showGroupOrderBtn").forEach(button => {
+                        button.addEventListener("click", function () {
+                            const controlNumber = this.getAttribute("data-control");
+                            const group = groupedOrders[controlNumber];
+                            showGroupOrderModal(group);
+                        });
+                    });
 
-                    totalCustomers.textContent = data.totalDiscounted;
-                    totalSenior.textContent = data.totalSenior;
-                    totalPWD.textContent = data.totalPWD;
-
-                    totalCustomers.textContent = data.totalDiscounted;
-                    totalSenior.textContent = data.totalSenior;
-                    totalPWD.textContent = data.totalPWD;
-
-
+                    // Update counters
+                    document.getElementById("totalCustomers").textContent = data.totalDiscounted;
+                    document.getElementById("totalSenior").textContent = data.totalSenior;
+                    document.getElementById("totalPWD").textContent = data.totalPWD;
                 })
                 .catch(error => console.error("Error fetching customer data:", error));
 
                 let timeout; // Variable to track inactivity timeout
-                const timeoutDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
+                const timeoutDuration = 15 * 60 * 1000; // 3 minutes in milliseconds
                 const warningDuration = 30 * 1000; // 30 seconds before logout
 
                 // Function to reset the inactivity timer
@@ -345,23 +383,38 @@
 
         });
 
-        function showImageModal(imageData) {
-            const modal = document.getElementById("imageModal");
-            const modalImage = document.getElementById("modalImage");
-            const closeBtn = document.querySelector("#imageModal .close");
+        function showGroupOrderModal(group) {
+            const modal = document.getElementById("groupOrderModal");
+            const modalBody = document.getElementById("groupOrderDetailsBody");
 
-            modalImage.src = `data:image/jpeg;base64,${imageData}`;
+            // Populate modal with group order details
+            modalBody.innerHTML = "";
+            group.forEach(customer => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${customer.name}</td>
+                    <td>${customer.citizen}</td>
+                    <td>${customer.food}</td>
+                    <td>${customer.date}</td>
+                    <td>${customer.time}</td>
+                    <td>${customer.cashier}</td>
+                    <td>₱${parseFloat(customer.discounted_price).toFixed(2)}</td>
+                `;
+                modalBody.appendChild(row);
+            });
+
+            // Show the modal
             modal.style.display = "block";
 
-            closeBtn.onclick = function () {
+            // Close modal functionality
+            document.getElementById("closeGroupOrderModal").onclick = function () {
                 modal.style.display = "none";
-            }
-
+            };
             window.onclick = function (event) {
                 if (event.target == modal) {
                     modal.style.display = "none";
                 }
-            }
+            };
         }
 
         document.getElementById("logoutButton").addEventListener("click", function () {
