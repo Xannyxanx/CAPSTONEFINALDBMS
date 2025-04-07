@@ -32,31 +32,54 @@ $branch = $_SESSION['branch'];
 error_log("Received POST data: " . print_r($_POST, true));
 
 // Validate required fields
-if (!isset($_POST['id']) || empty($_POST['id']) || 
-    !isset($_POST['pin']) || empty($_POST['pin']) || 
-    !isset($_POST['username']) || empty($_POST['username']) ||
-    !isset($_POST['branch']) || empty($_POST['branch']) ||
-    !isset($_POST['status'])) { // Allow "Inactive" or "0" as valid status
-    error_log("Missing required fields: " . print_r($_POST, true));
-    echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+if (!isset($_POST['id']) || empty($_POST['id'])) {
+    error_log("Missing user ID");
+    echo json_encode(["status" => "error", "message" => "User ID is required"]);
     exit();
 }
 
 $userID = intval($_POST['id']);
-$newPin = $_POST['pin'];
-$newUsername = $_POST['username'];
-$newBranch = $_POST['branch'];
-$newStatus = $_POST['status'];
+$fieldsToUpdate = [];
+$params = [];
 
-error_log("Updating user ID: $userID with new PIN: $newPin, new username: $newUsername, new branch: $newBranch, and new status: $newStatus");
+// Check which fields are provided and add them to the update query
+if (!empty($_POST['username'])) {
+    $fieldsToUpdate[] = "username = ?";
+    $params[] = $_POST['username'];
+}
+if (!empty($_POST['pin'])) {
+    $fieldsToUpdate[] = "pin = ?";
+    $params[] = $_POST['pin'];
+}
+if (!empty($_POST['branch'])) {
+    $fieldsToUpdate[] = "branch = ?";
+    $params[] = $_POST['branch'];
+}
+if (isset($_POST['status'])) { // Allow "Inactive" or "0" as valid status
+    $fieldsToUpdate[] = "status = ?";
+    $params[] = $_POST['status'];
+}
 
-$sqlUpdate = "UPDATE `cashier_users` SET branch = ?, pin = ?, username = ?, status = ? WHERE ID = ?";
+if (empty($fieldsToUpdate)) {
+    echo json_encode(["status" => "error", "message" => "No fields to update"]);
+    exit();
+}
 
+$params[] = $userID; // Add user ID as the last parameter
+$sqlUpdate = "UPDATE `cashier_users` SET " . implode(", ", $fieldsToUpdate) . " WHERE ID = ?";
 $stmt = $conn->prepare($sqlUpdate);
-$stmt->bind_param("ssssi", $newBranch, $newPin, $newUsername, $newStatus, $userID);
+
+if (!$stmt) {
+    error_log("SQL Error (Prepare): " . $conn->error);
+    echo json_encode(["status" => "error", "message" => "SQL prepare error: " . $conn->error]);
+    exit();
+}
+
+// Dynamically bind parameters
+$stmt->bind_param(str_repeat("s", count($params) - 1) . "i", ...$params);
 
 if (!$stmt->execute()) {
-    error_log("SQL Error (Update): " . $stmt->error);
+    error_log("SQL Error (Execute): " . $stmt->error);
     echo json_encode(["status" => "error", "message" => "Error updating user: " . $stmt->error]);
     exit();
 }
@@ -64,12 +87,9 @@ if (!$stmt->execute()) {
 $response = [
     "status" => "success",
     "message" => "User details have been updated successfully",
-    "updatedFields" => [
-        "branch" => $newBranch,
-        "pin" => $newPin,
-        "username" => $newUsername,
-        "status" => $newStatus
-    ]
+    "updatedFields" => array_combine(array_map(function ($field) {
+        return explode(" = ", $field)[0];
+    }, $fieldsToUpdate), array_slice($params, 0, -1))
 ];
 error_log("Response: " . json_encode($response));
 

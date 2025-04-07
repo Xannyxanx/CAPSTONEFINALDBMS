@@ -22,6 +22,7 @@ if (!in_array($referrer, $allowed_referrers)) {
 
 <head>
     <title>Calle Cafe - Account Management</title>
+    <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="icon" href="images/browserlogo.png" type="browser logo">
     <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
@@ -87,7 +88,6 @@ if (!in_array($referrer, $allowed_referrers)) {
                         <th style="width: 20%;">ID</th>
                         <th>NAME</th>
                         <th>USERNAME</th>
-                        <th style="width: 15%;">PIN</th>
                         <th style="width: 15%;">STATUS</th>
                         <th style="width: 15%;">Actions</th>
                     </tr>
@@ -116,6 +116,44 @@ if (!in_array($referrer, $allowed_referrers)) {
                 <button>No</button>
             </div>
         </div>
+
+        
+        <div id="editUserModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+            <div style="background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 50%; position: relative;">
+                <button id="closeEditUserModal" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+                <h2>Edit User Account</h2>
+                <form id="editUserForm" onsubmit="event.preventDefault(); updateUserAccount();">
+                    <input type="hidden" id="editUserId">
+                    
+                    <label for="editName">Name:</label>
+                    <div id="editName" style="margin-bottom: 10px; font-weight: bold;">User's name</div>
+                    
+                    <label for="editUsername">Username:</label>
+                    <input type="text" id="editUsername" placeholder="Enter new username">
+                    
+                    <label for="editPin">PIN:</label>
+                    <div style="position: relative;">
+                        <input type="password" id="editPin" placeholder="Enter new PIN" maxlength="4">
+                        <span onclick="togglePinVisibility('editPin')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">👁️</span>
+                    </div>
+                    
+                    <label for="confirmPin">Confirm PIN:</label>
+                    <div style="position: relative;">
+                        <input type="password" id="confirmPin" placeholder="Confirm new PIN" maxlength="4">
+                        <span onclick="togglePinVisibility('confirmPin')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">👁️</span>
+                    </div>
+                    
+                    <label for="editStatus">Status:</label>
+                    <select id="editStatus">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    
+                    <button type="submit" style="margin-top: 20px;">Update</button>
+                </form>
+            </div>
+        </div>
+
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -223,48 +261,24 @@ if (!in_array($referrer, $allowed_referrers)) {
 
                         let usernameCell = document.createElement("td");
                         usernameCell.textContent = user.username;
-                        usernameCell.setAttribute("data-username-id", user.ID);
-
-                        let pinCell = document.createElement("td");
-                        pinCell.textContent = user.pin;
-                        pinCell.setAttribute("data-pin-id", user.ID);
 
                         let statusCell = document.createElement("td");
                         statusCell.textContent = user.status;
-                        statusCell.setAttribute("data-status-id", user.ID);
 
                         let actionCell = document.createElement("td");
                         actionCell.style.textAlign = "center";
 
                         let editBtn = document.createElement("button");
-                        editBtn.classList.add("action-btn", "approve-btn");
-                        editBtn.innerHTML = `<img src="images/edit.png" alt="Edit" class="icon">`;
-                        editBtn.setAttribute("data-id", user.ID);
-                        editBtn.addEventListener("click", function () {
-                            editUser(this.getAttribute("data-id"));
-                        });
-                        /*
-                        let deleteBtn = document.createElement("button");
-                        deleteBtn.classList.add("action-btn", "decline-btn");
-                        deleteBtn.innerHTML = `<img src="images/decline.png" alt="Decline" class="icon">`;
-                        deleteBtn.setAttribute("data-id", user.ID);
-                        deleteBtn.addEventListener("click", function () {
-                            deleteUser(this.getAttribute("data-id"));
-                        });
-                        */
-                        let buttonContainer = document.createElement("div");
-                        buttonContainer.classList.add("action-buttons");
-                        buttonContainer.style.display = "flex";
-                        buttonContainer.style.gap = "5px";
-                        buttonContainer.appendChild(editBtn);
-                       // buttonContainer.appendChild(deleteBtn);
+                        editBtn.textContent = "Edit";
+                        editBtn.onclick = function () {
+                            openEditUserModal(user); // Open the modal with the user's data
+                        };
 
-                        actionCell.appendChild(buttonContainer);
+                        actionCell.appendChild(editBtn);
 
                         row.appendChild(idCell);
                         row.appendChild(nameCell);
                         row.appendChild(usernameCell);
-                        row.appendChild(pinCell);
                         row.appendChild(statusCell);
                         row.appendChild(actionCell);
 
@@ -329,39 +343,6 @@ if (!in_array($referrer, $allowed_referrers)) {
                         })
                         .catch(error => console.error("Error updating user:", error));
                 }
-                /*
-                function deleteUser(userID) {
-                    if (!userID) {
-                        alert("Error: No user ID found.");
-                        return;
-                    }
-
-                    let confirmRemove = confirm("ARE YOU SURE YOU WANT TO REMOVE THIS USER?");
-                    if (!confirmRemove) {
-                        return;
-                    } else {
-                        let confirmDelete = confirm("REMOVING THIS USER WILL REQUIRE THEM TO REGISTER AGAIN IF NEEDED. ARE YOU SURE YOU WANT TO PROCEED?");
-                        if (!confirmDelete) {
-                            return;
-                        }
-                    }
-                    console.log("Deleting User ID:", userID);
-                    fetch("4.1.delete.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: "id=" + encodeURIComponent(userID)
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("Response from server:", data);
-                            alert(data.message);
-                            if (data.status === "success") {
-                                location.reload();
-                            }
-                        })
-                        .catch(error => console.error("Error deleting user:", error));
-                }
-                */
                 document.getElementById("accountManagementLink").addEventListener("click", function (event) {
                     event.preventDefault();
                     showPasswordModal("4.1account_management.html");
@@ -455,6 +436,124 @@ if (!in_array($referrer, $allowed_referrers)) {
                     }
                 }
             })();
+
+            // Open the edit user modal
+            function openEditUserModal(user) {
+                document.getElementById("editUserId").value = user.ID;
+                document.getElementById("editName").textContent = user.name; // Populate the name as plain text
+                document.getElementById("editUsername").value = user.username;
+                document.getElementById("editPin").value = "";
+                document.getElementById("confirmPin").value = "";
+                document.getElementById("editStatus").value = user.status.toLowerCase();
+
+                const modal = document.getElementById("editUserModal");
+                modal.style.display = "block";
+
+                // Close modal when clicking the close button
+                document.getElementById("closeEditUserModal").onclick = function () {
+                    modal.style.display = "none";
+                };
+
+                // Close modal when clicking outside the modal content
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                };
+            }
+
+            // Toggle PIN visibility
+            function togglePinVisibility(inputId) {
+                const input = document.getElementById(inputId);
+                if (input.type === "password") {
+                    input.type = "text";
+                } else {
+                    input.type = "password";
+                }
+            }
+
+            // Update user account information
+            function updateUserAccount() {
+                const userId = document.getElementById("editUserId").value;
+                const username = document.getElementById("editUsername").value.trim();
+                const pin = document.getElementById("editPin").value.trim();
+                const confirmPin = document.getElementById("confirmPin").value.trim();
+                const status = document.getElementById("editStatus").value.trim();
+
+                if (pin && pin !== confirmPin) {
+                    alert("PINs do not match. Please try again.");
+                    return;
+                }
+
+                if (pin && pin.length !== 4) {
+                alert("PIN must be exactly 4 characters.");
+                return;
+                 }
+
+                const userData = { id: userId };
+                if (username) userData.username = username;
+                if (pin) userData.pin = pin;
+                if (status) userData.status = status;
+
+                fetch("4.1.update.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: new URLSearchParams(userData).toString()
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || "Failed to update user.");
+                        }
+                    })
+                    .catch(error => console.error("Error updating user:", error));
+            }
+
+            // Populate table with data
+            function populateTable(data) {
+                let tableBody = document.getElementById("tableBody");
+                tableBody.innerHTML = "";
+
+                data.forEach(user => {
+                    let row = document.createElement("tr");
+
+                    let idCell = document.createElement("td");
+                    idCell.textContent = user.ID;
+
+                    let nameCell = document.createElement("td");
+                    nameCell.textContent = user.name;
+
+                    let usernameCell = document.createElement("td");
+                    usernameCell.textContent = user.username;
+
+                    let statusCell = document.createElement("td");
+                    statusCell.textContent = user.status;
+
+                    let actionCell = document.createElement("td");
+                    actionCell.style.textAlign = "center";
+
+                    let editBtn = document.createElement("button");
+                    editBtn.textContent = "Edit";
+                    editBtn.onclick = function () {
+                        openEditUserModal(user);
+                    };
+
+                    actionCell.appendChild(editBtn);
+
+                    row.appendChild(idCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(usernameCell);
+                    row.appendChild(statusCell);
+                    row.appendChild(actionCell);
+
+                    tableBody.appendChild(row);
+                });
+            }
         </script>
 </body>
 

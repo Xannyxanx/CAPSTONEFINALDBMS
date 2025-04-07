@@ -21,45 +21,50 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-if (!isset($_SESSION['branch'])) {
-    error_log("Session branch not set");
-    echo json_encode(["status" => "error", "message" => "Session branch is missing."]);
-    exit();
-}
-
-$branch = $_SESSION['branch'];
-
-error_log("Received POST data: " . print_r($_POST, true));
-
-if (!isset($_POST['id']) || empty($_POST['id']) || !isset($_POST['pin']) || empty($_POST['pin']) || !isset($_POST['username']) || empty($_POST['username']) || !isset($_POST['status'])) { 
-    error_log("Missing Required Fields: " . print_r($_POST, true));
-    echo json_encode(["status" => "error", "message" => "Missing Required Fields"]);
+if (!isset($_POST['id']) || empty($_POST['id'])) {
+    echo json_encode(["status" => "error", "message" => "Missing user ID"]);
     exit();
 }
 
 $userID = intval($_POST['id']);
-$newPin = $_POST['pin'];
-$newUsername = $_POST['username'];
-$newStatus = $_POST['status'];
-error_log("Updating user ID: " . $userID . " with new PIN: " . $newPin . " and new username: " . $newUsername . " and new status: " . $newStatus);
+$fieldsToUpdate = [];
+$params = [];
 
-    $sqlUpdate = "UPDATE `cashier_users` SET pin = ?, username = ?, status = ? WHERE ID = ?";
+// Check which fields are provided and add them to the update query
+if (!empty($_POST['username'])) {
+    $fieldsToUpdate[] = "username = ?";
+    $params[] = $_POST['username'];
+}
+if (!empty($_POST['pin'])) {
+    $fieldsToUpdate[] = "pin = ?";
+    $params[] = $_POST['pin'];
+}
+if (!empty($_POST['status'])) {
+    $fieldsToUpdate[] = "status = ?";
+    $params[] = $_POST['status'];
+}
 
-
-$stmt = $conn->prepare($sqlUpdate);
-$stmt->bind_param("sssi", $newPin, $newUsername, $newStatus, $userID);
-
-if (!$stmt->execute()) {
-    error_log("SQL Error (Update): " . $stmt->error);
-    echo json_encode(["status" => "error", "message" => "Error updating user: " . $stmt->error]);
+if (empty($fieldsToUpdate)) {
+    echo json_encode(["status" => "error", "message" => "No fields to update"]);
     exit();
 }
 
-$response = ["status" => "success", "message" => "User PIN and username have been updated"];
-error_log("Response: " . json_encode($response));
+$params[] = $userID; // Add user ID as the last parameter
+$sqlUpdate = "UPDATE `cashier_users` SET " . implode(", ", $fieldsToUpdate) . " WHERE ID = ?";
+$stmt = $conn->prepare($sqlUpdate);
 
-header('Content-Type: application/json');
-echo json_encode($response);
+if (!$stmt) {
+    echo json_encode(["status" => "error", "message" => "SQL prepare error: " . $conn->error]);
+    exit();
+}
+
+$stmt->bind_param(str_repeat("s", count($params) - 1) . "i", ...$params);
+
+if ($stmt->execute()) {
+    echo json_encode(["status" => "success", "message" => "User updated successfully"]);
+} else {
+    echo json_encode(["status" => "error", "message" => "Error updating user: " . $stmt->error]);
+}
 
 $stmt->close();
 $conn->close();
