@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calle Cafe - OTP</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="images/browserlogo.png" type="browser logo">
+    <style>
+        /* Your existing styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #554033;
+        }
+
+        .container {
+            background: #E0C1A6;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #invalidOtp {
+            margin-top: 10px;
+            font-size: 14px;
+            color: red;
+        }
+
+        #timer {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #008000;
+        }
+
+        #resendOtp {
+            margin-top: 10px;
+            display: none;
+        }
+
+        #resendOtp a {
+            text-decoration: none;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #resendOtp a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img src="images/cafecallelogo.png" alt="LOGO" width="180" height="180">
+        <h2>Forgot Password</h2>
+        <form id="forgotPasswordForm">
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            <button type="submit" id="submitButton" class="login-btn-1">Submit</button>
+        </form>
+        <p id="responseMessage"></p>
+    </div>
+    <script>
+        document.getElementById("forgotPasswordForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email").value;
+            const responseMessage = document.getElementById("responseMessage");
+            const submitButton = document.getElementById("submitButton");
+
+            submitButton.disabled = true;
+            submitButton.style.pointerEvents = "none";
+
+            fetch("forgot_password.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `email=${encodeURIComponent(email)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        // Redirect to index.html with the success message
+                        alert(data.message); // Optional: Show an alert before redirecting
+                        window.location.href = "index.html";
+                    } else {
+                        // Show error message and re-enable the button
+                        responseMessage.style.color = "red";
+                        responseMessage.textContent = data.message;
+                        submitButton.disabled = false;
+                        submitButton.style.pointerEvents = "auto";
+                    }
+                })
+                .catch(error => {
+                    // Handle errors and re-enable the button
+                    responseMessage.style.color = "red";
+                    responseMessage.textContent = "An error occurred. Please try again.";
+                    console.error("Error:", error);
+                    submitButton.disabled = false;
+                    submitButton.style.pointerEvents = "auto";
+                });
+        });
+    </script>
+</body>
+</html>

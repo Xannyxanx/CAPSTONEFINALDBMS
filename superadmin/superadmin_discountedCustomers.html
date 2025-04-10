@@ -13,7 +13,7 @@
     <div>
         <!-- SIDEBAR -->
         <nav class="sidebar">
-            <h2>Calle Cafe <small> (superadmin)</small></h2>
+            <h2>Calle Cafe <small> (SuperAdmin)</small></h2>
             <ul>
                 <li><a href="superadmin_home.html">HOME</a></li>
                 <li><a href="superadmin_discountedCustomers.html">DISCOUNTED CUSTOMERS</a></li>
@@ -29,6 +29,15 @@
             <h2>Super Admin Discounted Customers</h2>
 
             <form class="archive-form" action="#" method="get" style="margin-right: 5%;"> <!-- Database -->
+                <label for="orderFiltering" style="font-weight: bold;">Order Type:</label>
+                <div class="dropdown">
+                    <select id="orderFiltering">
+                        <option value="all">All Orders</option>
+                        <option value="single">Single Orders</option>
+                        <option value="group">Group Orders</option>
+                    </select>
+                </div>
+                <label for="branchSelect" style="font-weight: bold;">Branch:</label>
                 <div class="dropdown">
                     <select id="branchSelect">
                         <option value="all">All</option>
@@ -66,9 +75,12 @@
                 <button class="pagination-controls-button" id="nextPage">Next</button>
             </div>
             <!-- Archive Button -->
-            <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div style="display: flex; justify-content: center; margin-top: 20px; gap: 20px;">
                 <button id="archiveBtn" class="archive-btn" style="display: flex; align-items: center; ">
                     Archive
+                </button>
+                <button id="showmoreBtn" class="showmore-btn" style="display: flex; align-items: center; ">
+                    Show more
                 </button>
             </div>
         </main>
@@ -83,17 +95,18 @@
         </div>
     </div>
 
-    <div id="groupOrderModal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <div id="groupOrderModal" class="modal" style="display: none; padding-left: 10%;">
+        <div class="modal-content-showall">
             <span class="close" id="closeGroupOrderModal">&times;</span>
             <h2>Group Order Details</h2>
             <table border="0.5" width="100%">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Name</th>
-                        <th style="width: 15%;">Citizen</th>
+                        <th style="width: 15%;">ID Number</th>
+                        <th style="width: 15%;">Name</th>
+                        <th style="width: 10%;">Citizen</th>
                         <th style="width: 20%;">Food</th>
-                        <th style="width: 15%;">Date</th>
+                        <th style="width: 10%;">Date</th>
                         <th style="width: 10%;">Time</th>
                         <th style="width: 10%;">Cashier</th>
                         <th style="width: 10%;">Cost</th>
@@ -105,6 +118,36 @@
             </table>
         </div>
     </div>
+
+    <div id="showmore-modal" class="modalShowmore" style="display: none;">
+        <div class="modal-content-showmore">
+            <span class="close" id="closeShowMoreModal">&times;</span>
+            <h2>Customer Details</h2>
+            <table border="0.5" width="100%">
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Citizen</th>
+                        <th>City</th>
+                        <th>Food</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Cashier</th>
+                        <th>Branch</th>
+                        <th>Disc%</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Control #</th>
+                    </tr>
+                </thead>
+                <tbody id="show-more-modal-body">
+                    <!-- Data will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -227,9 +270,10 @@
 
             function fetchData(page = 1) {
                 const branch = document.getElementById("branchSelect").value;
+                const orderType = document.getElementById("orderFiltering").value;
                 const query = document.getElementById("search").value.trim().toLowerCase();
 
-                let url = `superadmin_displayCustomers.php?page=${page}&branch=${branch}&query=${query}`;
+                let url = `superadmin_displayCustomers.php?page=${page}&branch=${encodeURIComponent(branch)}&orderType=${encodeURIComponent(orderType)}&query=${encodeURIComponent(query)}`;
 
                 fetch(url)
                     .then(response => response.json())
@@ -237,9 +281,8 @@
                         if (data.customers) {
                             populateTable(data.customers);
                             setupPagination(data.totalPages, data.currentPage);
-                            applyShowLess(); // Apply "Show Less" after populating the table
                         } else {
-                            tableBody.innerHTML = "<tr><td colspan='13'>No records found.</td></tr>";
+                            tableBody.innerHTML = "<tr><td colspan='8'>No records found.</td></tr>";
                             document.getElementById("paginationControls").style.display = "none";
                         }
                     })
@@ -269,6 +312,10 @@
                         const foodList = group.map(customer => customer.food).join(", ");
 
                         const row = document.createElement("tr");
+                        if (group.length > 1) {
+                            row.classList.add('group-order-row');
+                        }
+                        
                         row.innerHTML = `
                             <td>${group.length > 1 ? "GROUP ORDER": firstCustomer.ID}</td>
                             <td>${firstCustomer.name}</td>
@@ -308,6 +355,7 @@
                 group.forEach(customer => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
+                        <td>${customer.ID}</td>
                         <td>${customer.name}</td>
                         <td>${customer.citizen}</td>
                         <td>${customer.food}</td>
@@ -359,11 +407,80 @@
             }
 
             document.getElementById("branchSelect").addEventListener("change", () => fetchData(1));
+            document.getElementById("orderFiltering").addEventListener("change", () => fetchData(1));
             document.getElementById("search").addEventListener("input", () => fetchData(1));
 
             // Fetch branches and data on page load
             fetchBranches();
             fetchData(currentPage);
+        });
+
+        function showMoreModal(data) {
+            const modal = document.getElementById("showmore-modal");
+            const modalBody = document.getElementById("show-more-modal-body");
+
+            // Clear previous data
+            modalBody.innerHTML = "";
+
+            // Populate the modal with the provided data
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.ID}</td>
+                    <td>${item.name}</td>
+                    <td>${item.citizen}</td>
+                    <td>${item.city}</td>
+                    <td>${item.food}</td>
+                    <td>${item.date}</td>
+                    <td>${item.time}</td>
+                    <td>${item.cashier}</td>
+                    <td>${item.branch}</td>
+                    <td>${item.discount_percentage}%</td>
+                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td>₱${parseFloat(item.discounted_price).toFixed(2)}</td>
+                    <td>${item.control_number}</td>
+                `;
+                modalBody.appendChild(row);
+            });
+
+            // Show the modal
+            modal.style.display = "block";
+
+            // Close modal functionality
+            const closeModal = document.getElementById("closeShowMoreModal");
+            closeModal.onclick = function () {
+                modal.style.display = "none";
+            };
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            };
+        }
+
+        // Add event listener to the "Show More" button
+        document.getElementById("showmoreBtn").addEventListener("click", function () {
+            // Get the selected filters
+            const branch = document.getElementById("branchSelect").value;
+            const orderType = document.getElementById("orderFiltering").value;
+            const query = document.getElementById("search").value.trim();
+            const currentPage = document.getElementById("pageInfo").textContent.match(/\d+/g)?.[0] || 1;
+
+            // Construct the URL with the selected filters and current page
+            const url = `superadmin_displayCustomers.php?page=${currentPage}&branch=${encodeURIComponent(branch)}&orderType=${encodeURIComponent(orderType)}&query=${encodeURIComponent(query)}`;
+
+            // Fetch data for the modal
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.customers && data.customers.length > 0) {
+                        showMoreModal(data.customers);
+                    } else {
+                        alert("No data available to display.");
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
         });
     </script>
 </body>

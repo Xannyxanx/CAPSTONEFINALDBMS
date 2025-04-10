@@ -21,37 +21,71 @@ $user_name = $_SESSION['user_name'];
 $branch = $_SESSION['branch'];
 
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$limit = 8; // Number of records per page
+$orderType = isset($_GET['orderType']) ? strtolower(trim($_GET['orderType'])) : 'all';
+$limit = 8;
 $offset = ($page - 1) * $limit;
 
-// Fetch total record count
-$totalQuery = "SELECT COUNT(*) AS total FROM dapitancustomers WHERE branch = '$branch'";
-$totalResult = $conn->query($totalQuery);
-$totalRow = $totalResult->fetch_assoc();
-$totalRecords = $totalRow['total'];
-$totalPages = ceil($totalRecords / $limit);
+// Get all records first
+$sql = "SELECT ID, name, citizen, food, city, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number 
+        FROM dapitancustomers 
+        WHERE branch = '$branch'";
 
-// Fetch records for the current page
-$sql = "SELECT ID, name, citizen, food, city, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number
-        FROM dapitancustomers
-        WHERE branch = '$branch'
-        ORDER BY time DESC
-        LIMIT $limit OFFSET $offset";
 $result = $conn->query($sql);
-
-$customers = [];
+$allRecords = [];
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $customers[] = $row;
+        $allRecords[] = $row;
     }
 }
+
+// Apply order type filtering
+if ($orderType !== 'all') {
+    // Group records by control number
+    $groupedRecords = [];
+    foreach ($allRecords as $record) {
+        $controlNumber = $record['control_number'];
+        if (!isset($groupedRecords[$controlNumber])) {
+            $groupedRecords[$controlNumber] = [];
+        }
+        $groupedRecords[$controlNumber][] = $record;
+    }
+
+    // Filter based on order type
+    if ($orderType === 'group') {
+        // Keep only group orders (control numbers with more than 1 record)
+        $groupedRecords = array_filter($groupedRecords, function($group) {
+            return count($group) > 1;
+        });
+    } else if ($orderType === 'single') {
+        // Keep only single orders (control numbers with exactly 1 record)
+        $groupedRecords = array_filter($groupedRecords, function($group) {
+            return count($group) === 1;
+        });
+    }
+
+    // Flatten the grouped records back into a single array
+    $allRecords = [];
+    foreach ($groupedRecords as $group) {
+        $allRecords = array_merge($allRecords, $group);
+    }
+}
+
+// Sort by time
+usort($allRecords, function($a, $b) {
+    return strtotime($b['time']) - strtotime($a['time']);
+});
+
+// Calculate pagination
+$totalRecords = count($allRecords);
+$totalPages = ceil($totalRecords / $limit);
+$paginatedRecords = array_slice($allRecords, $offset, $limit);
 
 $conn->close();
 
 header('Content-Type: application/json');
 echo json_encode([
-    "customers" => $customers,
+    "customers" => $paginatedRecords,
     "totalPages" => $totalPages,
     "currentPage" => $page
 ]);

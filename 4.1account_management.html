@@ -52,7 +52,7 @@ if (!in_array($referrer, $allowed_referrers)) {
             <h2>Calle Cafe
                 <span class="branch-name" id="branchName"></span>
             </h2>
-            
+
             <ul>
                 <li><a href="1.home.html">HOME</a></li>
                 <li><a href="2.discounted_customers.html">DISCOUNTED CUSTOMERS</a></li>
@@ -102,8 +102,13 @@ if (!in_array($referrer, $allowed_referrers)) {
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Enter Password</h2>
-                <input class="modal-password-input" type="password" id="passwordInput"
-                    placeholder="Enter your password">
+                <div style="position: relative;">
+                    <input class="modal-password-input" type="password" id="passwordInput"
+                        placeholder="Enter your password">
+                    <img src="images/hide.png" alt="Toggle visibility"
+                        onclick="togglePinVisibility('passwordInput', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px; height: 20px;">
+                </div>
                 <button class="modal-password-btn" id="passwordSubmit">Submit</button>
             </div>
         </div>
@@ -117,39 +122,48 @@ if (!in_array($referrer, $allowed_referrers)) {
             </div>
         </div>
 
-        
-        <div id="editUserModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
-            <div style="background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 50%; position: relative;">
-                <button id="closeEditUserModal" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+
+        <!-- editUserModal -->
+        <div id="editUserModal" class="modal" style="padding-left: 10%;">
+            <div class="modal-content-edit">
+                <span id="closeEditUserModal" class="close">×</span>
                 <h2>Edit User Account</h2>
                 <form id="editUserForm" onsubmit="event.preventDefault(); updateUserAccount();">
                     <input type="hidden" id="editUserId">
-                    
+
                     <label for="editName">Name:</label>
                     <div id="editName" style="margin-bottom: 10px; font-weight: bold;">User's name</div>
-                    
+
                     <label for="editUsername">Username:</label>
-                    <input type="text" id="editUsername" placeholder="Enter new username">
-                    
+                    <input type="text" id="editUsername" placeholder="Enter new username" class="modal-password-input">
+
+                    <!-- For editPin -->
                     <label for="editPin">PIN:</label>
                     <div style="position: relative;">
-                        <input type="password" id="editPin" placeholder="Enter new PIN" maxlength="4">
-                        <span onclick="togglePinVisibility('editPin')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">👁️</span>
+                        <input type="password" id="editPin" placeholder="Enter new PIN" maxlength="4"
+                            class="modal-password-input">
+                        <img src="images/hide.png" alt="Toggle visibility"
+                            onclick="togglePinVisibility('editPin', this)"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px;">
                     </div>
-                    
+
+                    <!-- For confirmPin -->
                     <label for="confirmPin">Confirm PIN:</label>
                     <div style="position: relative;">
-                        <input type="password" id="confirmPin" placeholder="Confirm new PIN" maxlength="4">
-                        <span onclick="togglePinVisibility('confirmPin')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">👁️</span>
+                        <input type="password" id="confirmPin" placeholder="Confirm new PIN" maxlength="4"
+                            class="modal-password-input">
+                        <img src="images/hide.png" alt="Toggle visibility"
+                            onclick="togglePinVisibility('confirmPin', this)"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px;">
                     </div>
-                    
+
                     <label for="editStatus">Status:</label>
-                    <select id="editStatus">
+                    <select id="editStatus" class="modal-password-input">
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
-                    
-                    <button type="submit" style="margin-top: 20px;">Update</button>
+
+                    <button type="submit" class="modal-password-btn" style="margin-top: 20px;">Update</button>
                 </form>
             </div>
         </div>
@@ -169,20 +183,20 @@ if (!in_array($referrer, $allowed_referrers)) {
                 }
 
                 function showTimeoutWarning() {
-                const warningModal = document.createElement("div");
-                warningModal.id = "timeoutWarningModal";
-                warningModal.style.position = "fixed";
-                warningModal.style.top = "0";
-                warningModal.style.left = "0";
-                warningModal.style.width = "100%";
-                warningModal.style.height = "100%";
-                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-                warningModal.style.display = "flex";
-                warningModal.style.justifyContent = "center";
-                warningModal.style.alignItems = "center";
-                warningModal.style.zIndex = "1000";
+                    const warningModal = document.createElement("div");
+                    warningModal.id = "timeoutWarningModal";
+                    warningModal.style.position = "fixed";
+                    warningModal.style.top = "0";
+                    warningModal.style.left = "0";
+                    warningModal.style.width = "100%";
+                    warningModal.style.height = "100%";
+                    warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                    warningModal.style.display = "flex";
+                    warningModal.style.justifyContent = "center";
+                    warningModal.style.alignItems = "center";
+                    warningModal.style.zIndex = "1000";
 
-                warningModal.innerHTML = `
+                    warningModal.innerHTML = `
                     <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
                         <h2>Session Timeout Warning</h2>
                         <p>You will be logged out in 30 seconds due to inactivity.</p>
@@ -190,13 +204,13 @@ if (!in_array($referrer, $allowed_referrers)) {
                     </div>
                 `;
 
-                document.body.appendChild(warningModal);
+                    document.body.appendChild(warningModal);
 
-                // Add event listener to the "Stay Logged In" button
-                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
-                    document.body.removeChild(warningModal);
-                    resetTimer(); // Reset the timer
-                });
+                    // Add event listener to the "Stay Logged In" button
+                    document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                        document.body.removeChild(warningModal);
+                        resetTimer(); // Reset the timer
+                    });
 
                     // Automatically log out after 30 seconds if no action is taken
                     setTimeout(logout, warningDuration);
@@ -218,13 +232,13 @@ if (!in_array($referrer, $allowed_referrers)) {
 
 
                 fetch("get_branch.php")
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data); // Debugging: Check the response
-                    const branchNameElement = document.getElementById("branchName");
-                    branchNameElement.textContent = data.branch || "Unknown Branch";
-                })
-                .catch(error => console.error("Error fetching branch name:", error));
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data); // Debugging: Check the response
+                        const branchNameElement = document.getElementById("branchName");
+                        branchNameElement.textContent = data.branch || "Unknown Branch";
+                    })
+                    .catch(error => console.error("Error fetching branch name:", error));
                 // Fetch initial data: All users with active status
                 loadUserData("active");
 
@@ -268,10 +282,16 @@ if (!in_array($referrer, $allowed_referrers)) {
                         let actionCell = document.createElement("td");
                         actionCell.style.textAlign = "center";
 
-                        let editBtn = document.createElement("button");
-                        editBtn.textContent = "Edit";
+                        let editBtn = document.createElement("img");
+                        editBtn.src = "images/edit.png";
+                        editBtn.alt = "Edit";
+                        editBtn.title = "Edit User";
+                        editBtn.style.cursor = "pointer";
+                        editBtn.style.width = "20px";
+                        editBtn.style.height = "20px";
+
                         editBtn.onclick = function () {
-                            openEditUserModal(user); // Open the modal with the user's data
+                            openEditUserModal(user);
                         };
 
                         actionCell.appendChild(editBtn);
@@ -404,21 +424,21 @@ if (!in_array($referrer, $allowed_referrers)) {
                 });
             });
 
-            (function() {
+            (function () {
                 // 1. Break initial history
                 history.pushState(null, null, location.href);
-                
+
                 // 2. Continuously flood history stack
                 setInterval(() => {
                     history.replaceState(null, null, location.href);
                     history.pushState(null, null, location.href);
                 }, 100);
-                
+
                 // 3. Redirect any back attempts
-                window.onpopstate = function() {
+                window.onpopstate = function () {
                     window.location.replace("1.home.html?t=" + Date.now());
                 };
-                
+
                 // 4. Special handling for restricted pages
                 const restrictedPages = ["4.1account_management.html", "5.account_settings.html"];
                 if (restrictedPages.some(page => location.pathname.includes(page))) {
@@ -428,7 +448,7 @@ if (!in_array($referrer, $allowed_referrers)) {
                             window.location.replace("1.home.html");
                         }
                     });
-                    
+
                     // Additional protection against direct access
                     const referrer = document.referrer ? new URL(document.referrer).pathname.split('/').pop() : null;
                     if (!referrer || !allowed_referrers.includes(referrer)) {
@@ -463,13 +483,12 @@ if (!in_array($referrer, $allowed_referrers)) {
             }
 
             // Toggle PIN visibility
-            function togglePinVisibility(inputId) {
+            function togglePinVisibility(inputId, imgElement) {
                 const input = document.getElementById(inputId);
-                if (input.type === "password") {
-                    input.type = "text";
-                } else {
-                    input.type = "password";
-                }
+                const isPassword = input.type === 'password';
+
+                input.type = isPassword ? 'text' : 'password';
+                imgElement.src = isPassword ? 'images/show.png' : 'images/hide.png';
             }
 
             // Update user account information
@@ -486,9 +505,9 @@ if (!in_array($referrer, $allowed_referrers)) {
                 }
 
                 if (pin && pin.length !== 4) {
-                alert("PIN must be exactly 4 characters.");
-                return;
-                 }
+                    alert("PIN must be exactly 4 characters.");
+                    return;
+                }
 
                 const userData = { id: userId };
                 if (username) userData.username = username;
@@ -537,11 +556,14 @@ if (!in_array($referrer, $allowed_referrers)) {
                     let actionCell = document.createElement("td");
                     actionCell.style.textAlign = "center";
 
-                    let editBtn = document.createElement("button");
-                    editBtn.textContent = "Edit";
+                    let editBtn = document.createElement("img");
+                    editBtn.src = "images/edit.png";
+                    editBtn.alt = "Edit User";
+                    editBtn.style.cursor = "pointer";
                     editBtn.onclick = function () {
                         openEditUserModal(user);
                     };
+                    editBtn.title = "Edit User";
 
                     actionCell.appendChild(editBtn);
 

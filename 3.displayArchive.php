@@ -27,8 +27,9 @@ $branch = $_SESSION['branch'];
 $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
 $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : '';
 $query = isset($_GET['query']) ? $_GET['query'] : '';
+$orderType = isset($_GET['orderType']) ? strtolower(trim($_GET['orderType'])) : 'all';
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$limit = 8; // Number of records per page
+$limit = 8;
 $offset = ($page - 1) * $limit;
 
 if (empty($fromDate) || empty($toDate)) {
@@ -48,45 +49,79 @@ $dateRange = new DatePeriod($startDate, $dateInterval, $endDate->add($dateInterv
 
 // Initialize variables for merging records
 $allRecords = [];
-$totalRecords = 0;
 
 // Loop through each date in the range
 foreach ($dateRange as $date) {
     $currentDate = $date->format('Y-m-d');
 
-    // Check if the table for the current date exists
+    // Check if the table exists
     $tableExistsQuery = "SHOW TABLES LIKE '$currentDate'";
     $tableExistsResult = $conn->query($tableExistsQuery);
 
     if ($tableExistsResult->num_rows == 0) {
-        continue; // Skip this date if the table does not exist
+        continue;
     }
 
-    // Fetch records for the current date
+    // Base query
     $sql = "SELECT ID, name, citizen, city, food, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number 
             FROM `$currentDate` 
-            WHERE date = '$currentDate' and branch ='$branch'";
+            WHERE date = '$currentDate' AND branch = '$branch'";
+
+    // Apply search filter if provided
     if (!empty($query)) {
         $query = $conn->real_escape_string($query);
         $sql .= " AND (
             ID LIKE '%$query%' OR 
             name LIKE '%$query%' OR 
             citizen LIKE '%$query%' OR 
-            city LIKE %'$query%' OR
+            city LIKE '%$query%' OR
             food LIKE '%$query%' OR 
             date LIKE '%$query%' OR 
             time LIKE '%$query%' OR 
             cashier LIKE '%$query%'
         )";
     }
+
     $sql .= " ORDER BY time DESC";
 
     $result = $conn->query($sql);
 
-    if ($result->num_rows > 0) {
+    if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $allRecords[] = $row;
         }
+    }
+}
+
+// Apply order type filtering globally after merging all records
+if ($orderType !== 'all') {
+    // Group records by control number
+    $groupedRecords = [];
+    foreach ($allRecords as $record) {
+        $controlNumber = $record['control_number'];
+        if (!isset($groupedRecords[$controlNumber])) {
+            $groupedRecords[$controlNumber] = [];
+        }
+        $groupedRecords[$controlNumber][] = $record;
+    }
+
+    // Filter based on order type
+    if ($orderType === 'group') {
+        // Keep only group orders (control numbers with more than 1 record)
+        $groupedRecords = array_filter($groupedRecords, function($group) {
+            return count($group) > 1;
+        });
+    } else if ($orderType === 'single') {
+        // Keep only single orders (control numbers with exactly 1 record)
+        $groupedRecords = array_filter($groupedRecords, function($group) {
+            return count($group) === 1;
+        });
+    }
+
+    // Flatten the grouped records back into a single array
+    $allRecords = [];
+    foreach ($groupedRecords as $group) {
+        $allRecords = array_merge($allRecords, $group);
     }
 }
 
@@ -97,7 +132,7 @@ $paginatedRecords = array_slice($allRecords, $offset, $limit);
 
 $conn->close();
 
-// Include records and pagination info in the JSON response
+// Return the response as JSON
 header('Content-Type: application/json');
 echo json_encode([
     "records" => $paginatedRecords,

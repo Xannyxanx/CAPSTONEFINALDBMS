@@ -13,11 +13,11 @@
     <div>
         <!-- SIDEBAR -->
         <nav class="sidebar">
-            <h2>Calle Cafe 
+            <h2>Calle Cafe
                 <span class="branch-name" id="branchName"></span>
 
             </h2>
-            
+
             <ul>
                 <li><a href="1.home.html">HOME</a></li>
                 <li><a href="2.discounted_customers.html">DISCOUNTED CUSTOMERS</a></li>
@@ -31,6 +31,16 @@
         <main class="main-content" style="width: 80%; padding: 15px;">
             <h2>Discounted Customers</h2>
             <form class="archive-form" action="#" method="get"> <!--Database-->
+                
+                <label for="orderFiltering" style="font-weight: bold;">Order Type:</label>
+                <div class="dropdown">
+                    <select id="orderFiltering">
+                        <option value="all">All Orders</option>
+                        <option value="single">Single Orders</option>
+                        <option value="group">Group Orders</option>
+                    </select>
+                </div>
+
                 <input type="search" id="search" name="query" placeholder="Search..." required>
             </form>
             <!-- TABLE-->
@@ -63,9 +73,12 @@
                 <button class="pagination-controls-button" id="nextPage">Next</button>
             </div>
             <!-- Archive Button -->
-            <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div style="display: flex; justify-content: center; margin-top: 20px; gap: 20px;">
                 <button id="archiveBtn" class="archive-btn" style="display: flex; align-items: center; ">
                     Archive
+                </button>
+                <button id="showmoreBtn" class="showmore-btn" style="display: flex; align-items: center; ">
+                    Show more
                 </button>
             </div>
         </main>
@@ -75,7 +88,12 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Enter Password</h2>
-            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <div style="position: relative;">
+                <input class="modal-password-input" type="password" id="passwordInput"
+                    placeholder="Enter your password">
+                <img src="images/hide.png" alt="Toggle visibility" onclick="togglePinVisibility('passwordInput', this)"
+                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px; height: 20px;">
+            </div>
             <button class="modal-password-btn" id="passwordSubmit">Submit</button>
         </div>
     </div>
@@ -90,17 +108,18 @@
         </div>
     </div>
 
-    <div id="groupOrderModal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <div id="groupOrderModal" class="modal" style="display: none; padding-left: 10%;">
+        <div class="modal-content-showall">
             <span class="close" id="closeGroupOrderModal">&times;</span>
             <h2>Group Order Details</h2>
             <table border="0.5" width="100%">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Name</th>
-                        <th style="width: 15%;">Citizen</th>
+                        <th style="width: 15%;">ID Number</th>
+                        <th style="width: 15%;">Name</th>
+                        <th style="width: 10%;">Citizen</th>
                         <th style="width: 20%;">Food</th>
-                        <th style="width: 15%;">Date</th>
+                        <th style="width: 10%;">Date</th>
                         <th style="width: 10%;">Time</th>
                         <th style="width: 10%;">Cashier</th>
                         <th style="width: 10%;">Cost</th>
@@ -112,8 +131,46 @@
             </table>
         </div>
     </div>
+    <!-- Show More Modal -->
+    <div id="showmore-modal" class="modalShowmore" style="display: none;">
+        <div class="modal-content-showmore">
+            <span class="close" id="closeShowMoreModal">&times;</span>
+            <h2>Customer Details</h2>
+            <table border="0.5" width="100%">
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Citizen</th>
+                        <th>City</th>
+                        <th>Food</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Cashier</th>
+                        <th>Branch</th>
+                        <th>Disc%</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                        <th>Control #</th>
+                    </tr>
+                </thead>
+                <tbody id="show-more-modal-body">
+                    <!-- Data will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
+        // Toggle PIN visibility
+        function togglePinVisibility(inputId, imgElement) {
+            const input = document.getElementById(inputId);
+            const isPassword = input.type === 'password';
+
+            input.type = isPassword ? 'text' : 'password';
+            imgElement.src = isPassword ? 'images/show.png' : 'images/hide.png';
+        }
+
         console.log("Script is loaded and running.");
         document.addEventListener("DOMContentLoaded", function () {
             fetchData();
@@ -134,20 +191,20 @@
             }
 
             function showTimeoutWarning() {
-            const warningModal = document.createElement("div");
-            warningModal.id = "timeoutWarningModal";
-            warningModal.style.position = "fixed";
-            warningModal.style.top = "0";
-            warningModal.style.left = "0";
-            warningModal.style.width = "100%";
-            warningModal.style.height = "100%";
-            warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-            warningModal.style.display = "flex";
-            warningModal.style.justifyContent = "center";
-            warningModal.style.alignItems = "center";
-            warningModal.style.zIndex = "1000";
+                const warningModal = document.createElement("div");
+                warningModal.id = "timeoutWarningModal";
+                warningModal.style.position = "fixed";
+                warningModal.style.top = "0";
+                warningModal.style.left = "0";
+                warningModal.style.width = "100%";
+                warningModal.style.height = "100%";
+                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                warningModal.style.display = "flex";
+                warningModal.style.justifyContent = "center";
+                warningModal.style.alignItems = "center";
+                warningModal.style.zIndex = "1000";
 
-            warningModal.innerHTML = `
+                warningModal.innerHTML = `
                 <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
                     <h2>Session Timeout Warning</h2>
                     <p>You will be logged out in 30 seconds due to inactivity.</p>
@@ -155,18 +212,18 @@
                 </div>
             `;
 
-            document.body.appendChild(warningModal);
+                document.body.appendChild(warningModal);
 
-            // Add event listener to the "Stay Logged In" button
-            document.getElementById("stayLoggedInButton").addEventListener("click", function () {
-                document.body.removeChild(warningModal);
-                resetTimer(); // Reset the timer
-            });
+                // Add event listener to the "Stay Logged In" button
+                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                    document.body.removeChild(warningModal);
+                    resetTimer(); // Reset the timer
+                });
 
                 // Automatically log out after 30 seconds if no action is taken
                 setTimeout(logout, warningDuration);
             }
-            
+
             // Function to log out the user
             function logout() {
                 window.location.href = "logout.php"; // Redirect to the logout page
@@ -181,7 +238,7 @@
             // Start the inactivity timer
             resetTimer();
 
-            
+
             function setupPagination(totalPages, currentPage) {
                 const prevPageButton = document.getElementById("prevPage");
                 const nextPageButton = document.getElementById("nextPage");
@@ -222,28 +279,34 @@
                 })
                 .catch(error => console.error("Error fetching branch name:", error));
 
-                function fetchData(page = 1) {
-                    console.log("fetchData function called."); // Debugging: Log when fetchData is called
-                    let url = `displayCustomers.php?page=${page}`;
-                    console.log("Fetching data from URL:", url); // Debugging: Log the URL
+            function fetchData(page = 1) {
+                const query = document.getElementById("search").value.trim().toLowerCase();
+                const orderType = document.getElementById("orderFiltering").value;
 
-                    fetch(url)
-                        .then(response => {
-                            console.log("Fetch Response Status:", response.status); // Debugging: Log the response status
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log("Fetched Data:", data); // Debugging: Log the fetched data
-                            if (data.customers && data.customers.length > 0) {
-                                populateTable(data.customers);
-                                setupPagination(data.totalPages, data.currentPage);
-                            } else {
-                                tableBody.innerHTML = "<tr><td colspan='8'>No records found.</td></tr>";
-                                paginationControls.style.display = "none";
-                            }
-                        })
-                        .catch(error => console.error("Error fetching data:", error));
+                let url = `displayCustomers.php?page=${page}&orderType=${encodeURIComponent(orderType)}`;
+                if (query) {
+                    url += `&query=${encodeURIComponent(query)}`;
                 }
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Fetched Data:", data);
+                        if (data.customers && data.customers.length > 0) {
+                            populateTable(data.customers);
+                            setupPagination(data.totalPages, data.currentPage);
+                        } else {
+                            tableBody.innerHTML = "<tr><td colspan='8'>No records found.</td></tr>";
+                            paginationControls.style.display = "none";
+                        }
+                    })
+                    .catch(error => console.error("Error fetching data:", error));
+            }
+
+            document.getElementById("orderFiltering").addEventListener("change", () => fetchData(1));
 
             function populateTable(customers) {
                 console.log("Populating Table with Customers:", customers); // Debugging: Log the customers array
@@ -268,8 +331,14 @@
                         const foodList = group.map(customer => customer.food).join(", ");
 
                         const row = document.createElement("tr");
+                        
+                        // Add the group-order-row class if it's a group order
+                        if (group.length > 1) {
+                            row.classList.add('group-order-row');
+                        }
+                        
                         row.innerHTML = `
-                            <td>${group.length > 1 ? "GROUP ORDER": firstCustomer.ID}</td>
+                            <td>${group.length > 1 ? "GROUP ORDER" : firstCustomer.ID}</td>
                             <td>${firstCustomer.name}</td>
                             <td>${firstCustomer.citizen}</td>
                             <td>${foodList}</td>
@@ -305,6 +374,7 @@
                 group.forEach(customer => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
+                        <td>${customer.ID}</td>
                         <td>${customer.name}</td>
                         <td>${customer.citizen}</td>
                         <td>${customer.food}</td>
@@ -421,7 +491,68 @@
                 }
             }
         });
+
+        // Function to show the "Show More" modal with data
+        function showMoreModal(data) {
+            const modal = document.getElementById("showmore-modal");
+            const modalBody = document.getElementById("show-more-modal-body");
+
+            // Clear previous data
+            modalBody.innerHTML = "";
+
+            // Populate the modal with the provided data
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.ID}</td>
+                    <td>${item.name}</td>
+                    <td>${item.citizen}</td>
+                    <td>${item.city}</td>
+                    <td>${item.food}</td>
+                    <td>${item.date}</td>
+                    <td>${item.time}</td>
+                    <td>${item.cashier}</td>
+                    <td>${item.branch}</td>
+                    <td>${item.discount_percentage}%</td>
+                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td>₱${parseFloat(item.discounted_price).toFixed(2)}</td>
+                    <td>${item.control_number}</td>
+                `;
+                modalBody.appendChild(row);
+            });
+
+            // Show the modal
+            modal.style.display = "block";
+
+            // Close modal functionality
+            const closeModal = document.getElementById("closeShowMoreModal");
+            closeModal.onclick = function () {
+                modal.style.display = "none";
+            };
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            };
+        }
+
+        // Add event listener to the "Show More" button
+        document.getElementById("showmoreBtn").addEventListener("click", function () {
+            // Fetch data for the modal (replace with actual data fetching logic)
+            fetch("displayCustomers.php")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.customers && data.customers.length > 0) {
+                        showMoreModal(data.customers);
+                    } else {
+                        alert("No data available to display.");
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        });
     </script>
 </body>
 
 </html>
+``` 

@@ -15,8 +15,6 @@ if ($conn->connect_error) {
     die(json_encode(["error" => "Connection failed: " . $conn->connect_error]));
 }
 
-$foodCategories = ['Drinks', 'Pasta', 'Pastry'];
-
 // Check if the request is a POST request
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
@@ -55,85 +53,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Normalize the food field by sorting the items alphabetically
-    $foodItems = array_unique(explode(',', $food));
+    $foodItems = explode(',', $food);
     sort($foodItems);
     $normalizedFood = implode(',', $foodItems);
 
-    // Track order history per category
-    $categoryHistory = array_fill_keys($foodCategories, []);
-    
-    // Get all orders for this customer
-    $historyQuery = "SELECT food, time FROM dapitancustomers WHERE ID = ? AND name = ? AND city = ?";
-    $historyStmt = $conn->prepare($historyQuery);
-    $historyStmt->bind_param("sss", $idNumber, $name, $city);
-    $historyStmt->execute();
-    $historyResult = $historyStmt->get_result();
-    
-    while ($row = $historyResult->fetch_assoc()) {
-        $items = explode(',', $row['food']);
-        foreach ($items as $item) {
-            $item = trim($item);
-            if (in_array($item, $foodCategories)) {
-                $categoryHistory[$item][] = date("g:i A", strtotime($row['time']));
-            }
+    // Check if any of the food items already exist for the same customer on the same date
+    $existingFoods = [];
+    foreach ($foodItems as $foodItem) {
+        $checkQuery = "SELECT food FROM dapitancustomers WHERE ID = ? AND name = ? AND date = ? AND FIND_IN_SET(?, food)";
+        $checkStmt = $conn->prepare($checkQuery);
+        $checkStmt->bind_param("ssss", $idNumber, $name, $date, $foodItem);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+
+        if ($checkResult->num_rows > 0) {
+            $existingFoods[] = $foodItem;
         }
+
+        $checkStmt->close();
     }
-    $historyStmt->close();
-    
-    // Check for exceeded categories
-    $blockedCategories = [];
-    foreach ($foodItems as $item) {
-        $item = trim($item);
-        if (in_array($item, $foodCategories) && count($categoryHistory[$item]) >= 3) {
-            $blockedCategories[$item] = $categoryHistory[$item];
-        }
-    }
-    
-    if (!empty($blockedCategories)) {
-        // Get sample order info
-        $sampleQuery = "SELECT ID, name, citizen, date, time, branch 
-                       FROM dapitancustomers 
-                       WHERE ID = ? AND name = ? AND city = ? LIMIT 1";
-        $sampleStmt = $conn->prepare($sampleQuery);
-        $sampleStmt->bind_param("sss", $idNumber, $name, $city);
-        $sampleStmt->execute();
-        $sampleResult = $sampleStmt->get_result();
-        $orderInfo = $sampleResult->fetch_assoc();
-        $sampleStmt->close();
-        
-        // Format the blocked items message
-        $blockedItemsMessage = [];
-        foreach ($blockedCategories as $category => $times) {
-            $lastTime = array_pop($times);
-            $timeList = !empty($times) ? implode(', ', $times).' and '.$lastTime : $lastTime;
-            $blockedItemsMessage[] = "$category at $timeList";
-        }
-        
-        // CRITICAL: Use the EXACT format Android expects
+
+    if (!empty($existingFoods)) {
+        // Retrieve the complete order information
+        $orderQuery = "SELECT ID, name, citizen, date, time, branch FROM dapitancustomers WHERE ID = ? AND name = ? AND date = ?";
+        $orderStmt = $conn->prepare($orderQuery);
+        $orderStmt->bind_param("sss", $idNumber, $name, $date);
+        $orderStmt->execute();
+        $orderResult = $orderStmt->get_result();
+        $orderInfo = $orderResult->fetch_assoc();
+        $orderStmt->close();
+
         $response = [
             "success" => false,
-            "message" => "The following food items have already been availed:\n• " . 
-                         implode("\n• ", $blockedItemsMessage) . 
-                         "\n\nComplete order information:\nID: {$orderInfo['ID']}\nName: {$orderInfo['name']}\n" .
-                         "Citizen Type: {$orderInfo['citizen']}\nDate: {$orderInfo['date']}\n" .
-                         "Branch: {$orderInfo['branch']}"
+            "message" => "The following food items have already been availed:\n• " . implode("\n• ", $existingFoods) . "\n\nComplete order information:\nID: {$orderInfo['ID']}\nName: {$orderInfo['name']}\nCitizen Type: {$orderInfo['citizen']}\nDate: {$orderInfo['date']}\nTime: {$orderInfo['time']}\nBranch: {$orderInfo['branch']}"
         ];
+
+        // Debugging statement
+        error_log("Response: " . json_encode($response));
+
         echo json_encode($response);
+        $conn->close();
         exit();
     }
 
-
     // Insert the new record
     $query = "INSERT INTO dapitancustomers (
-        ID, name, citizen, city, food, date, time, 
+        ID, name, citizen, food, date, time, 
         cashier, branch, discount_percentage, price,
         discounted_price, control_number
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($query);
 
     // Bind parameters to the query
-    $stmt->bind_param("sssssssssssss", $idNumber, $name, $citizenType, $city, $normalizedFood, $date, $time, 
+    $stmt->bind_param("ssssssssssss", $idNumber, $name, $citizenType, $normalizedFood, $date, $time, 
     $cashierName, $branch, $discountPercentage, $original_price, $total_price, $control_no);
 
     // Execute the query and check if it was successful

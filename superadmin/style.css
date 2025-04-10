@@ -500,6 +500,28 @@ canvas {
 
 }
 
+.modal-content-edit {
+    background-color: #554033;
+    margin: 5% auto;
+    padding: 20px;
+    border: none;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 350px;
+    text-align: center;
+    color: #dfd5d5;
+    margin-bottom: 20px;
+
+}
+
+.modal-content-edit input {
+    color: black; /* Set input text color to black */
+}
+
+.modal-content-edit select {
+    color: black; /* Set input text color to black */
+}
+
 .modal-password-input {
     width: 100%;
     text-align: center;
@@ -731,4 +753,205 @@ canvas {
 .toggle-columns-btn:hover {
     background-color: #45a049;
     /* Keep this specific hover effect */
+}
+
+
+.modal-content-showall {
+    background-color: #E0C1A6;
+    margin: 5% auto;
+    padding: 20px;
+    border: none;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 50%;
+    text-align: center;
+    color: #000000;
+    margin-bottom: 20px;
+}
+
+/* General modal styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Ensure it appears above other elements */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scrolling if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+}
+
+.showmore-btn {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #efe4d4;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.0s ease;
+    text-align: center;
+}
+
+.showmore-btn:hover {
+    background-color: #0056b3;
+}
+
+.modal-content-showmore {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 75%;
+    max-height: 75%;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    color: #333;
+}
+
+.modal-content-showmore h2 {
+    text-align: center;
+    color: #554033;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+
+.modal-content-showmore th,
+.modal-content-showmore td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+.modal-content-showmore th {
+    background-color: #556b2f;
+    color: #fff;
+    font-weight: bold;
+}
+
+.modal-content-showmore tr:hover {
+    background-color: #f1f1f1;
+}
+
+.modal-content-showmore .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-content-showmore .close:hover {
+    color: #000;
+}
+
+/* Styling specifically for the Show More modal */
+.modalShowmore {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Ensure it appears above other elements */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scrolling if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+}
+
+.modal-content-showmore {
+    background-color: #E0C1A6;
+    margin: 5% auto; /* Center the modal vertically and horizontally */
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto; /* Enable scrolling for large content */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    color: #333;
+    position: relative; /* Ensure proper positioning within the modal */
+}
+
+.modal-content-showmore h2 {
+    text-align: center;
+    color: #554033;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+
+.modal-content-showmore th,
+.modal-content-showmore td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+.modal-content-showmore th {
+    background-color: #556b2f;
+    color: #fff;
+    font-weight: bold;
+}
+
+
+.modal-content-showmore tr:hover {
+    background-color: #f1f1f1;
+}
+
+.modal-content-showmore .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.modal-content-showmore .close:hover {
+    color: #000;
+}
+
+/* Styling for the Show More modal table */
+.modal-content-showmore table {
+    width: 100%;
+    border-collapse: collapse; /* Ensures borders don't double up */
+    font-family: Arial, sans-serif;
+    border: 1px solid #000000; /* Adds a border around the entire table */
+}
+
+.modal-content-showmore th,
+.modal-content-showmore td {
+    border: 1px solid #000000; /* Adds borders between rows and columns */
+    padding: 10px;
+    text-align: center;
+}
+
+.modal-content-showmore th {
+    background-color: #556b2f; /* Header background color */
+    color: #fff; /* Header text color */
+    font-weight: bold;
+    border-bottom: 2px solid #444; /* Thicker border below the header */
+}
+
+.modal-content-showmore tr:hover {
+    background-color: #f1f1f1; /* Highlight color on hover */
+}
+
+.modal-content-showmore td {
+    border-top: 1px solid #000000; 
+    border-bottom: 1px solid #000000; 
+}
+
+.group-order-row {
+    background-color: #3890e2 !important; /* Moccasin color for group orders */
+}
+
+.group-order-row:hover {
+    background-color: #50a7da !important; 
 }

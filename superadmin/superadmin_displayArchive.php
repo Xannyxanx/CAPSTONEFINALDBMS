@@ -28,6 +28,7 @@ $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
 $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : '';
 $query = isset($_GET['query']) ? $_GET['query'] : '';
 $selectedBranch = isset($_GET['branch']) ? strtolower(trim($_GET['branch'])) : 'all';
+$orderType = isset($_GET['orderType']) ? strtolower(trim($_GET['orderType'])) : 'all';
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $limit = 8; // Number of records per page
 $offset = ($page - 1) * $limit;
@@ -81,21 +82,24 @@ $totalRecords = 0;
 foreach ($dateRange as $date) {
     $currentDate = $date->format('Y-m-d');
 
-    // Check if the table for the current date exists
     $tableExistsQuery = "SHOW TABLES LIKE '$currentDate'";
     $tableExistsResult = $conn->query($tableExistsQuery);
 
     if ($tableExistsResult->num_rows == 0) {
-        continue; // Skip this date if the table does not exist
+        continue;
     }
 
-    // Fetch records for the current date
+    // Base query to fetch all records for the current date
     $sql = "SELECT ID, name, citizen, food, city, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number 
             FROM `$currentDate` 
             WHERE date = '$currentDate'";
+
+    // Apply branch filter if selected
     if ($selectedBranch !== 'all') {
         $sql .= " AND LOWER(branch) = '$selectedBranch'";
     }
+
+    // Apply search filter if provided
     if (!empty($query)) {
         $query = $conn->real_escape_string($query);
         $sql .= " AND (
@@ -109,15 +113,43 @@ foreach ($dateRange as $date) {
             cashier LIKE '%$query%'
         )";
     }
+
     $sql .= " ORDER BY time DESC";
 
     $result = $conn->query($sql);
 
-    if ($result->num_rows > 0) {
+    if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $allRecords[] = $row;
         }
     }
+}
+
+// Apply order type filtering globally after merging all records
+if ($orderType !== 'all') {
+    $groupedRecords = [];
+    foreach ($allRecords as $record) {
+        $controlNumber = $record['control_number'];
+        if (!isset($groupedRecords[$controlNumber])) {
+            $groupedRecords[$controlNumber] = [];
+        }
+        $groupedRecords[$controlNumber][] = $record;
+    }
+
+    if ($orderType === 'group') {
+        // Keep only group orders (control numbers with more than 1 record)
+        $allRecords = array_filter($groupedRecords, function ($group) {
+            return count($group) > 1;
+        });
+    } elseif ($orderType === 'single') {
+        // Keep only single orders (control numbers with exactly 1 record)
+        $allRecords = array_filter($groupedRecords, function ($group) {
+            return count($group) === 1;
+        });
+    }
+
+    // Flatten the grouped records back into a single array
+    $allRecords = array_merge(...$allRecords);
 }
 
 // Calculate total records and apply pagination

@@ -17,7 +17,7 @@
             <h2>Calle Cafe
                 <span class="branch-name" id="branchName"></span>
             </h2>
-            
+
             <ul>
                 <li><a href="1.home.html">HOME</a></li>
                 <li><a href="2.discounted_customers.html">DISCOUNTED CUSTOMERS</a></li>
@@ -111,7 +111,12 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Enter Password</h2>
-            <input class="modal-password-input" type="password" id="passwordInput" placeholder="Enter your password">
+            <div style="position: relative;">
+                <input class="modal-password-input" type="password" id="passwordInput"
+                    placeholder="Enter your password">
+                <img src="images/hide.png" alt="Toggle visibility" onclick="togglePinVisibility('passwordInput', this)"
+                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px; height: 20px;">
+            </div>
             <button class="modal-password-btn" id="passwordSubmit">Submit</button>
         </div>
     </div>
@@ -125,17 +130,18 @@
         </div>
     </div>
 
-    <div id="groupOrderModal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <div id="groupOrderModal" class="modal" style="display: none; padding-left: 10%;">
+        <div class="modal-content-showall">
             <span class="close" id="closeGroupOrderModal">&times;</span>
             <h2>Group Order Details</h2>
             <table border="0.5" width="100%">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Name</th>
-                        <th style="width: 15%;">Citizen</th>
+                        <th style="width: 15%;">ID Number</th>
+                        <th style="width: 15%;">Name</th>
+                        <th style="width: 10%;">Citizen</th>
                         <th style="width: 20%;">Food</th>
-                        <th style="width: 15%;">Date</th>
+                        <th style="width: 10%;">Date</th>
                         <th style="width: 10%;">Time</th>
                         <th style="width: 10%;">Cashier</th>
                         <th style="width: 10%;">Cost</th>
@@ -165,14 +171,14 @@
                 }
             };
             fetch("1.recent_customers.php")
-            .then(response => response.json())
-            .then(data => {
-                console.log(data); // Debugging: Check the response
-                const branchNameElement = document.getElementById("branchName");
-                branchNameElement.textContent = data.branch || "Unknown Branch";
-            })
-            .catch(error => console.error("Error fetching branch name:", error));
-            
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // Debugging: Check the response
+                    const branchNameElement = document.getElementById("branchName");
+                    branchNameElement.textContent = data.branch || "Unknown Branch";
+                })
+                .catch(error => console.error("Error fetching branch name:", error));
+
 
             function createPieChart(data) {
                 const ctx = document.getElementById('myPieChart').getContext('2d');
@@ -310,17 +316,17 @@
                 })
                 .catch(error => console.error("Error fetching customer data:", error));
 
-                let timeout; // Variable to track inactivity timeout
-                const timeoutDuration = 15 * 60 * 1000; // 3 minutes in milliseconds
-                const warningDuration = 30 * 1000; // 30 seconds before logout
+            let timeout; // Variable to track inactivity timeout
+            const timeoutDuration = 15 * 60 * 1000; // 3 minutes in milliseconds
+            const warningDuration = 30 * 1000; // 30 seconds before logout
 
-                // Function to reset the inactivity timer
-                function resetTimer() {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
-                }
+            // Function to reset the inactivity timer
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(showTimeoutWarning, timeoutDuration - warningDuration);
+            }
 
-                function showTimeoutWarning() {
+            function showTimeoutWarning() {
                 const warningModal = document.createElement("div");
                 warningModal.id = "timeoutWarningModal";
                 warningModal.style.position = "fixed";
@@ -350,25 +356,25 @@
                     resetTimer(); // Reset the timer
                 });
 
-                    // Automatically log out after 30 seconds if no action is taken
-                    setTimeout(logout, warningDuration);
-                }
+                // Automatically log out after 30 seconds if no action is taken
+                setTimeout(logout, warningDuration);
+            }
 
-                // Function to log out the user
-                function logout() {
-                    window.location.href = "logout.php"; // Redirect to the logout page
-                }
+            // Function to log out the user
+            function logout() {
+                window.location.href = "logout.php"; // Redirect to the logout page
+            }
 
-                // Reset the timer on user activity
-                window.addEventListener("mousemove", resetTimer);
-                window.addEventListener("keydown", resetTimer);
-                window.addEventListener("scroll", resetTimer);
-                window.addEventListener("click", resetTimer);
+            // Reset the timer on user activity
+            window.addEventListener("mousemove", resetTimer);
+            window.addEventListener("keydown", resetTimer);
+            window.addEventListener("scroll", resetTimer);
+            window.addEventListener("click", resetTimer);
 
-                // Start the inactivity timer
-                resetTimer();
+            // Start the inactivity timer
+            resetTimer();
 
-                 history.pushState(null, null, location.href);
+            history.pushState(null, null, location.href);
             window.onpopstate = function () {
                 // Prevent navigating back to sensitive pages
                 const restrictedPages = [
@@ -392,6 +398,7 @@
             group.forEach(customer => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
+                    <td>${customer.ID}</td>
                     <td>${customer.name}</td>
                     <td>${customer.citizen}</td>
                     <td>${customer.food}</td>
@@ -421,7 +428,7 @@
             window.location.href = "logout.php";
         });
 
-       
+
 
         document.getElementById("accountManagementLink").addEventListener("click", function (event) {
             event.preventDefault();
@@ -469,6 +476,15 @@
                         .catch(error => console.error("Error verifying password:", error));
                 }
             }
+        }
+
+        // Toggle PIN visibility
+        function togglePinVisibility(inputId, imgElement) {
+            const input = document.getElementById(inputId);
+            const isPassword = input.type === 'password';
+
+            input.type = isPassword ? 'text' : 'password';
+            imgElement.src = isPassword ? 'images/show.png' : 'images/hide.png';
         }
 
     </script>

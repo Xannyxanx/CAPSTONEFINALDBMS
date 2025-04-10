@@ -57,8 +57,13 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Enter Password</h2>
-                <input class="modal-password-input" type="password" id="passwordInput"
-                    placeholder="Enter your password">
+                <div style="position: relative;">
+                    <input class="modal-password-input" type="password" id="passwordInput"
+                        placeholder="Enter your password">
+                    <img src="images/hide.png" alt="Toggle visibility"
+                        onclick="togglePinVisibility('passwordInput', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; width: 20px; height: 20px;">
+                </div>
                 <button class="modal-password-btn" id="passwordSubmit">Submit</button>
             </div>
         </div>
@@ -76,14 +81,14 @@
             document.addEventListener("DOMContentLoaded", function () {
                 let requestData = [];
                 fetch("get_branch.php")
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data); // Debugging: Check the response
-                    const branchNameElement = document.getElementById("branchName");
-                    branchNameElement.textContent = data.branch || "Unknown Branch";
-                })
-                .catch(error => console.error("Error fetching branch name:", error));
-               
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data); // Debugging: Check the response
+                        const branchNameElement = document.getElementById("branchName");
+                        branchNameElement.textContent = data.branch || "Unknown Branch";
+                    })
+                    .catch(error => console.error("Error fetching branch name:", error));
+
                 let timeout; // Variable to track inactivity timeout
                 const timeoutDuration = 15 * 60 * 1000; // 3 minutes in milliseconds
                 const warningDuration = 30 * 1000; // 30 seconds before logout
@@ -95,20 +100,20 @@
                 }
 
                 function showTimeoutWarning() {
-                const warningModal = document.createElement("div");
-                warningModal.id = "timeoutWarningModal";
-                warningModal.style.position = "fixed";
-                warningModal.style.top = "0";
-                warningModal.style.left = "0";
-                warningModal.style.width = "100%";
-                warningModal.style.height = "100%";
-                warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-                warningModal.style.display = "flex";
-                warningModal.style.justifyContent = "center";
-                warningModal.style.alignItems = "center";
-                warningModal.style.zIndex = "1000";
+                    const warningModal = document.createElement("div");
+                    warningModal.id = "timeoutWarningModal";
+                    warningModal.style.position = "fixed";
+                    warningModal.style.top = "0";
+                    warningModal.style.left = "0";
+                    warningModal.style.width = "100%";
+                    warningModal.style.height = "100%";
+                    warningModal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                    warningModal.style.display = "flex";
+                    warningModal.style.justifyContent = "center";
+                    warningModal.style.alignItems = "center";
+                    warningModal.style.zIndex = "1000";
 
-                warningModal.innerHTML = `
+                    warningModal.innerHTML = `
                     <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
                         <h2>Session Timeout Warning</h2>
                         <p>You will be logged out in 30 seconds due to inactivity.</p>
@@ -116,13 +121,13 @@
                     </div>
                 `;
 
-                document.body.appendChild(warningModal);
+                    document.body.appendChild(warningModal);
 
-                // Add event listener to the "Stay Logged In" button
-                document.getElementById("stayLoggedInButton").addEventListener("click", function () {
-                    document.body.removeChild(warningModal);
-                    resetTimer(); // Reset the timer
-                });
+                    // Add event listener to the "Stay Logged In" button
+                    document.getElementById("stayLoggedInButton").addEventListener("click", function () {
+                        document.body.removeChild(warningModal);
+                        resetTimer(); // Reset the timer
+                    });
 
                     // Automatically log out after 30 seconds if no action is taken
                     setTimeout(logout, warningDuration);
@@ -330,6 +335,15 @@
                     }
                 }
             });
+
+            // Toggle PIN visibility
+            function togglePinVisibility(inputId, imgElement) {
+                const input = document.getElementById(inputId);
+                const isPassword = input.type === 'password';
+
+                input.type = isPassword ? 'text' : 'password';
+                imgElement.src = isPassword ? 'images/show.png' : 'images/hide.png';
+            }
         </script>
 </body>
 

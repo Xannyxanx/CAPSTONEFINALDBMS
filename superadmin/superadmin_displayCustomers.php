@@ -36,23 +36,64 @@ if ($resultBranches->num_rows > 0) {
     }
 }
 
-// Fetch customers based on the selected branch
+// Fetch customers based on the selected branch and order type
 $selectedBranch = isset($_GET['branch']) ? strtolower(trim($_GET['branch'])) : 'all';
+$orderType = isset($_GET['orderType']) ? strtolower(trim($_GET['orderType'])) : 'all';
 
-$totalQuery = "SELECT COUNT(*) AS total FROM dapitancustomers";
+// Modify the query to handle order filtering
+$totalQuery = "SELECT COUNT(*) AS total FROM dapitancustomers WHERE 1=1";
 if ($selectedBranch !== "all") {
-    $totalQuery .= " WHERE LOWER(branch) = '$selectedBranch'";
+    $totalQuery .= " AND LOWER(branch) = '$selectedBranch'";
 }
+if ($orderType !== "all") {
+    if ($orderType === "group") {
+        $totalQuery .= " AND control_number IN (
+            SELECT control_number 
+            FROM dapitancustomers 
+            GROUP BY control_number 
+            HAVING COUNT(*) > 1
+        )";
+    } else if ($orderType === "single") {
+        $totalQuery .= " AND control_number IN (
+            SELECT control_number 
+            FROM dapitancustomers 
+            GROUP BY control_number 
+            HAVING COUNT(*) = 1
+        )";
+    }
+}
+
 $totalResult = $conn->query($totalQuery);
 $totalRow = $totalResult->fetch_assoc();
 $totalRecords = $totalRow['total'];
 $totalPages = ceil($totalRecords / $limit);
 
 $sql = "SELECT ID, name, citizen, city, food, date, time, cashier, branch, discount_percentage, price, discounted_price, control_number
-        FROM dapitancustomers";
+        FROM dapitancustomers
+        WHERE 1=1";
+
 if ($selectedBranch !== "all") {
-    $sql .= " WHERE LOWER(branch) = '$selectedBranch'";
+    $sql .= " AND LOWER(branch) = '$selectedBranch'";
 }
+
+if ($orderType !== "all") {
+    if ($orderType === "group") {
+        $sql .= " AND control_number IN (
+            SELECT control_number 
+            FROM dapitancustomers 
+            GROUP BY control_number 
+            HAVING COUNT(*) > 1
+        )";
+    } else if ($orderType === "single") {
+        $sql .= " AND control_number IN (
+            SELECT control_number 
+            FROM dapitancustomers 
+            GROUP BY control_number 
+            HAVING COUNT(*) = 1
+        )";
+    }
+}
+
 $sql .= " ORDER BY time DESC LIMIT $limit OFFSET $offset";
 
 $result = $conn->query($sql);
